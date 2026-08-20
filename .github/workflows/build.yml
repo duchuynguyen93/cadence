@@ -1,0 +1,66 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    # Build TRÊN Windows thật, không cross-compile từ Linux.
+    # Cross-compile vẫn ra file chạy được, nhưng bản artifact mà người dùng tải về
+    # nên được sinh trên đúng nền tảng đích để loại trừ hẳn nhóm lỗi khác biệt môi trường.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # BASS là phần mềm độc quyền, không nằm trong git — phải tải lúc build.
+      # Dùng PowerShell vì runner Windows không có bash sẵn cho script .sh.
+      - name: Tải native lib của BASS
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path native/win-x64 | Out-Null
+          $packages = @{
+            'bass24'       = 'x64/bass.dll'
+            'bassflac24'   = 'x64/bassflac.dll'
+            'basswasapi24' = 'x64/basswasapi.dll'
+            'bassmix24'    = 'x64/bassmix.dll'
+          }
+          foreach ($name in $packages.Keys) {
+            $zip = "$env:RUNNER_TEMP/$name.zip"
+            Invoke-WebRequest "https://www.un4seen.com/files/$name.zip" -OutFile $zip
+            Expand-Archive $zip -DestinationPath "$env:RUNNER_TEMP/$name" -Force
+            Copy-Item "$env:RUNNER_TEMP/$name/$($packages[$name])" native/win-x64/
+          }
+          Get-ChildItem native/win-x64
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
+      - name: Publish win-x64
+        run: dotnet publish src/Cadence.App -c Release -r win-x64 --self-contained false -o dist
+
+      # Bảo hiểm cho bug đã từng dính: bản build thiếu bass.dll vẫn "thành công"
+      # rồi crash lúc chạy. Kiểm luôn ở CI thay vì để người dùng phát hiện.
+      - name: Kiểm tra native lib đã được đóng gói
+        shell: pwsh
+        run: |
+          $required = @('bass.dll', 'bassflac.dll', 'bassmix.dll', 'basswasapi.dll')
+          $missing = $required | Where-Object { -not (Test-Path "dist/$_") }
+          if ($missing) { throw "Bản publish thiếu native lib: $($missing -join ', ')" }
+          if (Get-ChildItem dist -Filter *.dylib) { throw "Có .dylib của macOS lọt vào bản Windows" }
+          Write-Host "OK — native lib đầy đủ và đúng nền tảng"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cadence-win-x64
+          path: dist/

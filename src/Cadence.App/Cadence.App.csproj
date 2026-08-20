@@ -1,0 +1,73 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Models\" />
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cadence.Core\Cadence.Core.csproj" />
+    <ProjectReference Include="..\Cadence.Audio\Cadence.Audio.csproj" />
+  </ItemGroup>
+
+  <!--
+    Thư viện native của BASS. Gói ManagedBass trên NuGet chỉ là wrapper P/Invoke,
+    KHÔNG kèm bass.dll — chạy scripts/fetch-bass.sh để tải về thư mục native/.
+
+    Phải đặt ở ĐÂY chứ không phải trong Cadence.Audio: RuntimeIdentifier chỉ được
+    gán cho project thực thi, không lan xuống class library. Đặt nhầm chỗ thì lệnh
+    `dotnet publish -r win-x64` chạy trên Mac sẽ đóng gói .dylib vào bản Windows.
+
+    Ưu tiên RuntimeIdentifier (lúc publish); nếu không có RID thì theo OS đang chạy
+    (lúc dev bằng `dotnet run`).
+  -->
+  <PropertyGroup>
+    <_CadenceNativeRid Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)</_CadenceNativeRid>
+    <_CadenceNativeRid Condition="'$(_CadenceNativeRid)' == '' And $([MSBuild]::IsOSPlatform('Windows'))">win-x64</_CadenceNativeRid>
+    <_CadenceNativeRid Condition="'$(_CadenceNativeRid)' == '' And $([MSBuild]::IsOSPlatform('OSX'))">osx</_CadenceNativeRid>
+  </PropertyGroup>
+
+  <ItemGroup Condition="$(_CadenceNativeRid.StartsWith('win'))">
+    <None Include="$(MSBuildThisFileDirectory)..\..\native\win-x64\*.dll"
+          Link="%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest"
+          Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$(_CadenceNativeRid.StartsWith('osx'))">
+    <None Include="$(MSBuildThisFileDirectory)..\..\native\osx\*.dylib"
+          Link="%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest"
+          Visible="false" />
+  </ItemGroup>
+
+  <!--
+    Chặn sự cố tái diễn: bản build cho Windows mà thiếu bass.dll thì compile vẫn
+    "thành công" rồi crash lúc chạy. Fail ngay tại đây rõ ràng hơn nhiều.
+  -->
+  <Target Name="VerifyBassNatives" AfterTargets="Build">
+    <Error Condition="$(_CadenceNativeRid.StartsWith('win')) And !Exists('$(MSBuildThisFileDirectory)..\..\native\win-x64\bass.dll')"
+           Text="Thiếu native/win-x64/bass.dll — chạy scripts/fetch-bass.sh trước khi build cho Windows." />
+    <Error Condition="$(_CadenceNativeRid.StartsWith('osx')) And !Exists('$(MSBuildThisFileDirectory)..\..\native\osx\libbass.dylib')"
+           Text="Thiếu native/osx/libbass.dylib — chạy scripts/fetch-bass.sh trước khi build trên macOS." />
+  </Target>
+</Project>

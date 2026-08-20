@@ -1,0 +1,234 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Bảng màu và style dựng lại ngôn ngữ thiết kế macOS trên Windows.
+
+        Vì sao tự định nghĩa hết thay vì chỉnh FluentTheme: Fluent là ngôn ngữ của
+        Windows — bo góc to hơn, khoảng cách thoáng hơn, chữ lớn hơn. Cố "sửa" Fluent
+        cho giống macOS sẽ ra một thứ lai không giống cái nào. Ở đây chỉ mượn control
+        template của Fluent rồi thay toàn bộ token hình ảnh.
+
+        Số đo lấy từ macOS thật:
+        - Chữ giao diện 13px (Windows quen 14–15px)
+        - Bo góc 6px cho hàng/nút, 10px cho panel
+        - Đèn giao thông 12px, cách nhau 8px, lề trái 20px
+    -->
+
+    <Styles.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+
+                <ResourceDictionary x:Key="Dark">
+                    <!-- Nền: macOS xếp lớp từ tối ra sáng dần theo độ "nổi" của bề mặt -->
+                    <SolidColorBrush x:Key="WindowBackground" Color="#1C1C1E" />
+                    <SolidColorBrush x:Key="SidebarBackground" Color="#00FFFFFF" />
+                    <SolidColorBrush x:Key="ContentBackground" Color="#1C1C1E" />
+                    <SolidColorBrush x:Key="ElevatedBackground" Color="#2C2C2E" />
+
+                    <!-- Chữ: macOS dùng alpha thay vì màu xám đặc, nên nó hoà với nền phía dưới -->
+                    <SolidColorBrush x:Key="TextPrimary" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="TextSecondary" Color="#FFFFFF" Opacity="0.55" />
+                    <SolidColorBrush x:Key="TextTertiary" Color="#FFFFFF" Opacity="0.30" />
+
+                    <SolidColorBrush x:Key="Separator" Color="#FFFFFF" Opacity="0.10" />
+                    <SolidColorBrush x:Key="HoverOverlay" Color="#FFFFFF" Opacity="0.06" />
+                    <SolidColorBrush x:Key="SelectedOverlay" Color="#FFFFFF" Opacity="0.10" />
+
+                    <!-- Xanh hệ thống của macOS ở chế độ tối (sáng hơn bản light) -->
+                    <SolidColorBrush x:Key="Accent" Color="#0A84FF" />
+                    <SolidColorBrush x:Key="AccentMuted" Color="#0A84FF" Opacity="0.25" />
+
+                    <SolidColorBrush x:Key="TrafficRed" Color="#FF5F57" />
+                    <SolidColorBrush x:Key="TrafficYellow" Color="#FEBC2E" />
+                    <SolidColorBrush x:Key="TrafficGreen" Color="#28C840" />
+                </ResourceDictionary>
+
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="WindowBackground" Color="#ECECEC" />
+                    <SolidColorBrush x:Key="SidebarBackground" Color="#00FFFFFF" />
+                    <SolidColorBrush x:Key="ContentBackground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="ElevatedBackground" Color="#F5F5F7" />
+
+                    <SolidColorBrush x:Key="TextPrimary" Color="#000000" />
+                    <SolidColorBrush x:Key="TextSecondary" Color="#000000" Opacity="0.55" />
+                    <SolidColorBrush x:Key="TextTertiary" Color="#000000" Opacity="0.30" />
+
+                    <SolidColorBrush x:Key="Separator" Color="#000000" Opacity="0.10" />
+                    <SolidColorBrush x:Key="HoverOverlay" Color="#000000" Opacity="0.05" />
+                    <SolidColorBrush x:Key="SelectedOverlay" Color="#000000" Opacity="0.08" />
+
+                    <SolidColorBrush x:Key="Accent" Color="#007AFF" />
+                    <SolidColorBrush x:Key="AccentMuted" Color="#007AFF" Opacity="0.20" />
+
+                    <SolidColorBrush x:Key="TrafficRed" Color="#FF5F57" />
+                    <SolidColorBrush x:Key="TrafficYellow" Color="#FEBC2E" />
+                    <SolidColorBrush x:Key="TrafficGreen" Color="#28C840" />
+                </ResourceDictionary>
+
+            </ResourceDictionary.ThemeDictionaries>
+
+            <!-- Thang cỡ chữ của macOS -->
+            <x:Double x:Key="FontSizeLarge">22</x:Double>
+            <x:Double x:Key="FontSizeTitle">15</x:Double>
+            <x:Double x:Key="FontSizeBody">13</x:Double>
+            <x:Double x:Key="FontSizeSmall">11</x:Double>
+
+            <CornerRadius x:Key="RadiusRow">6</CornerRadius>
+            <CornerRadius x:Key="RadiusPanel">10</CornerRadius>
+        </ResourceDictionary>
+    </Styles.Resources>
+
+    <!-- ── Đèn giao thông ────────────────────────────────────────────────────
+         Trên macOS đây là control hệ thống; trên Windows phải tự vẽ.
+         Ký hiệu bên trong chỉ hiện khi rê chuột vào cụm — đúng hành vi macOS thật. -->
+    <Style Selector="Button.traffic">
+        <Setter Property="Width" Value="12" />
+        <Setter Property="Height" Value="12" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        CornerRadius="6" Width="12" Height="12" />
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="Button.traffic.close">
+        <Setter Property="Background" Value="{DynamicResource TrafficRed}" />
+    </Style>
+    <Style Selector="Button.traffic.minimise">
+        <Setter Property="Background" Value="{DynamicResource TrafficYellow}" />
+    </Style>
+    <Style Selector="Button.traffic.zoom">
+        <Setter Property="Background" Value="{DynamicResource TrafficGreen}" />
+    </Style>
+    <!-- Cửa sổ mất focus thì đèn xám lại, giống hệt macOS -->
+    <Style Selector="Border.trafficCluster:not(.active) Button.traffic">
+        <Setter Property="Background" Value="{DynamicResource TextTertiary}" />
+    </Style>
+
+    <!-- ── Mục sidebar ───────────────────────────────────────────────────── -->
+    <Style Selector="ListBox.sidebar">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="10,4" />
+    </Style>
+    <Style Selector="ListBox.sidebar ListBoxItem">
+        <Setter Property="Padding" Value="8,5" />
+        <Setter Property="Margin" Value="0,1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusRow}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+        <Setter Property="MinHeight" Value="0" />
+    </Style>
+    <Style Selector="ListBox.sidebar ListBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource HoverOverlay}" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusRow}" />
+    </Style>
+    <Style Selector="ListBox.sidebar ListBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SelectedOverlay}" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusRow}" />
+    </Style>
+
+    <!-- ── Bảng danh sách bài ────────────────────────────────────────────── -->
+    <Style Selector="ListBox.tracks">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="8,0" />
+    </Style>
+    <Style Selector="ListBox.tracks ListBoxItem">
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusRow}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+    </Style>
+    <Style Selector="ListBox.tracks ListBoxItem:nth-child(2n) /template/ ContentPresenter">
+        <!-- Sọc ngựa vằn rất nhạt — Music/iTunes dùng để mắt bám hàng khi danh sách dài -->
+        <Setter Property="Background" Value="{DynamicResource HoverOverlay}" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusRow}" />
+    </Style>
+    <Style Selector="ListBox.tracks ListBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Accent}" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusRow}" />
+    </Style>
+
+    <!-- ── Nút điều khiển phát ───────────────────────────────────────────── -->
+    <Style Selector="Button.transport">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.transport:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource HoverOverlay}" />
+    </Style>
+    <Style Selector="Button.transport.toggled">
+        <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+    </Style>
+
+    <!-- ── Thanh tua ────────────────────────────────────────────────────────
+         Slider của Fluent có núm to và rãnh dày. macOS mảnh hơn nhiều. -->
+    <Style Selector="Slider.scrub">
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="Height" Value="20" />
+    </Style>
+    <Style Selector="Slider.scrub /template/ Track">
+        <Setter Property="Height" Value="4" />
+    </Style>
+    <Style Selector="Slider.scrub /template/ Thumb">
+        <Setter Property="Width" Value="12" />
+        <Setter Property="Height" Value="12" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Background" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <!-- ── Ô tìm kiếm ────────────────────────────────────────────────────── -->
+    <Style Selector="TextBox.search">
+        <Setter Property="Background" Value="{DynamicResource HoverOverlay}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="8,3" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="Height" Value="24" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+
+    <!-- ── Nút phụ ở sidebar ────────────────────────────────────────────────
+         macOS dùng nút nền mờ bo góc nhỏ chứ không viền đậm như Windows. -->
+    <Style Selector="Button.sidebarAction">
+        <Setter Property="Background" Value="{DynamicResource HoverOverlay}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="10,5" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.sidebarAction:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SelectedOverlay}" />
+    </Style>
+    <Style Selector="Button.sidebarAction:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+    </Style>
+
+    <Style Selector="TextBlock.sectionHeader">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+        <Setter Property="Margin" Value="18,12,0,4" />
+    </Style>
+
+</Styles>

@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Cadence.App/Cadence.App.csproj" />
+    <Project Path="src/Cadence.Audio/Cadence.Audio.csproj" />
+    <Project Path="src/Cadence.Core/Cadence.Core.csproj" />
+  </Folder>
+</Solution>

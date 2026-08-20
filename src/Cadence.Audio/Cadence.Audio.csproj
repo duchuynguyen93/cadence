@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cadence.Core\Cadence.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ManagedBass" Version="4.0.2" />
+    <PackageReference Include="ManagedBass.Flac" Version="4.0.2" />
+    <PackageReference Include="ManagedBass.Mix" Version="4.0.2" />
+    <PackageReference Include="ManagedBass.Wasapi" Version="4.0.2" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!--
+    Native lib của BASS KHÔNG copy từ đây mà từ Cadence.App.csproj.
+
+    Lý do (đã bị dính bug này một lần): RuntimeIdentifier không lan từ project thực thi
+    xuống class library được tham chiếu. Đặt điều kiện copy ở đây thì khi chạy
+    `dotnet publish -r win-x64` trên máy Mac, project này vẫn thấy RID rỗng, tưởng
+    đang build cho macOS, và nhét .dylib vào bản Windows — thiếu sạch bass.dll.
+    Bản build trông vẫn "thành công" rồi crash ngay khi mở trên Windows.
+  -->
+
+</Project>

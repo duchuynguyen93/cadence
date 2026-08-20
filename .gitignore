@@ -1,0 +1,22 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+artifacts/
+
+# Rider / VS / VS Code
+.idea/
+.vs/
+.vscode/
+
+# Thư viện native của BASS.
+#
+# KHÔNG commit mấy file này: chúng là phần mềm độc quyền của un4seen, và giấy phép
+# không cho phép phân phối lại tuỳ tiện. Chạy scripts/fetch-bass.sh để tải về.
+native/win-x64/*.dll
+native/osx/*.dylib
+native/linux-x64/*.so
+
+# macOS
+.DS_Store

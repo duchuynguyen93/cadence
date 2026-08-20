@@ -1,0 +1,266 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:Cadence.App.ViewModels"
+        xmlns:conv="using:Cadence.App.Converters"
+        xmlns:ctrl="using:Cadence.App.Controls"
+        mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="640"
+        x:Class="Cadence.App.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Cadence"
+        Width="1000" Height="640"
+        MinWidth="720" MinHeight="440"
+        Background="{DynamicResource WindowBackground}"
+        FontSize="{StaticResource FontSizeBody}"
+        Foreground="{DynamicResource TextPrimary}"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="-1"
+        WindowDecorations="Full">
+
+    <!--
+        ExtendClientAreaToDecorationsHint đẩy nội dung lên chiếm cả vùng title bar,
+        còn TitleBarHeightHint="-1" nghĩa là "cao bao nhiêu tuỳ nội dung" — nhờ đó ta
+        tự vẽ được title bar kiểu macOS ở hàng đầu của Grid.
+
+        WindowDecorations="Full" giữ lại viền và bóng đổ của hệ điều hành, nên cửa sổ
+        vẫn resize và snap được như app Windows bình thường.
+
+        LƯU Ý: Avalonia 12 đã bỏ ExtendClientAreaChromeHints (cờ cũ dùng để ẩn nút
+        thu nhỏ/phóng to/đóng của Windows) và thay bằng cơ chế WindowDecorationsTheme.
+        Cần kiểm tra trên máy Windows xem nút hệ thống có còn hiện chồng lên cụm đèn
+        giao thông của ta không; nếu có thì phải chỉnh WindowDecorationsTheme.
+    -->
+
+    <Grid RowDefinitions="38,*,74">
+
+        <!-- ══ Thanh tiêu đề ═══════════════════════════════════════════════
+             PointerPressed ở code-behind cho phép kéo cửa sổ bằng vùng trống này,
+             thay cho title bar gốc đã bị gỡ. -->
+        <Border Grid.Row="0" Name="TitleBar" Background="Transparent">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+
+                <!-- Đèn giao thông macOS -->
+                <Border Grid.Column="0" Name="TrafficCluster" Classes="trafficCluster active"
+                        Margin="20,0,0,0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Classes="traffic close"    Name="CloseButton"    />
+                        <Button Classes="traffic minimise" Name="MinimiseButton" />
+                        <Button Classes="traffic zoom"     Name="ZoomButton"     />
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Grid.Column="1" Text="Cadence"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="{StaticResource FontSizeBody}" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextSecondary}" />
+
+                <TextBox Grid.Column="2" Classes="search" Width="200" Margin="0,0,16,0"
+                         VerticalAlignment="Center"
+                         Watermark="Tìm bài hát, nghệ sĩ, album"
+                         Text="{Binding SearchText}" />
+            </Grid>
+        </Border>
+
+        <!-- ══ Thân ════════════════════════════════════════════════════════ -->
+        <Grid Grid.Row="1" ColumnDefinitions="200,*">
+
+            <!-- Sidebar -->
+            <Border Grid.Column="0" Background="{DynamicResource SidebarBackground}">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <StackPanel Grid.Row="0">
+                        <TextBlock Classes="sectionHeader" Text="THƯ VIỆN" />
+                        <ListBox Classes="sidebar" SelectedIndex="0">
+                            <ListBoxItem Content="Bài hát" />
+                            <ListBoxItem Content="Album" IsEnabled="False" />
+                            <ListBoxItem Content="Nghệ sĩ" IsEnabled="False" />
+                        </ListBox>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Margin="14,0,14,14" Spacing="6">
+                        <Button Name="AddFolderButton" Classes="sidebarAction"
+                                Content="Thêm thư mục" />
+                        <Button Classes="sidebarAction" Content="Quét lại"
+                                Command="{Binding RescanCommand}"
+                                IsEnabled="{Binding !IsScanning}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Danh sách bài -->
+            <Border Grid.Column="1" Background="{DynamicResource ContentBackground}"
+                    CornerRadius="10,0,0,0" BorderThickness="1,1,0,0"
+                    BorderBrush="{DynamicResource Separator}">
+                <Grid RowDefinitions="28,*">
+
+                    <!-- Tiêu đề cột -->
+                    <Grid Grid.Row="0" Margin="18,0,26,0"
+                          ColumnDefinitions="30,36,3*,2*,2*,56">
+                        <TextBlock Grid.Column="0" Text="#"        Foreground="{DynamicResource TextTertiary}" FontSize="11" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="2" Text="Tên bài"  Foreground="{DynamicResource TextTertiary}" FontSize="11" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="3" Text="Nghệ sĩ"  Foreground="{DynamicResource TextTertiary}" FontSize="11" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="4" Text="Album"    Foreground="{DynamicResource TextTertiary}" FontSize="11" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="5" Text="Thời lượng" Foreground="{DynamicResource TextTertiary}" FontSize="11"
+                                   VerticalAlignment="Center" HorizontalAlignment="Right" />
+                    </Grid>
+
+                    <ListBox Grid.Row="1" Name="TrackList" Classes="tracks"
+                             ItemsSource="{Binding VisibleTracks}"
+                             SelectedItem="{Binding SelectedTrack}"
+                             IsVisible="{Binding HasLibrary}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="30,36,3*,2*,2*,56" VerticalAlignment="Center">
+                                    <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextTertiary}"
+                                               Text="{Binding TrackNumber, Converter={x:Static conv:AppConverters.BlankIfZero}}" />
+                                    <!-- DecodeWidth=64 cho ô 26px: dư gấp đôi để màn hình DPI cao không bị vỡ ảnh. -->
+                                    <ctrl:ArtworkImage Grid.Column="1" Width="26" Height="26" Radius="3"
+                                                       DecodeWidth="64" VerticalAlignment="Center"
+                                                       HorizontalAlignment="Left"
+                                                       Hash="{Binding ArtworkHash}" />
+                                    <TextBlock Grid.Column="2" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                               Text="{Binding Title}" />
+                                    <TextBlock Grid.Column="3" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                               Foreground="{DynamicResource TextSecondary}"
+                                               Text="{Binding DisplayArtist}" />
+                                    <TextBlock Grid.Column="4" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                               Foreground="{DynamicResource TextSecondary}"
+                                               Text="{Binding DisplayAlbum}" />
+                                    <TextBlock Grid.Column="5" VerticalAlignment="Center" HorizontalAlignment="Right"
+                                               Foreground="{DynamicResource TextSecondary}"
+                                               Text="{Binding Duration, Converter={x:Static conv:AppConverters.Duration}}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Màn hình rỗng lúc chưa có nhạc -->
+                    <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                Spacing="10" IsVisible="{Binding !HasLibrary}">
+                        <TextBlock Text="Thư viện đang trống"
+                                   FontSize="{StaticResource FontSizeLarge}" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Thêm một thư mục nhạc để bắt đầu."
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ══ Thanh phát ══════════════════════════════════════════════════ -->
+        <Border Grid.Row="2" Background="{DynamicResource ElevatedBackground}"
+                BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Separator}">
+            <Grid ColumnDefinitions="*,Auto,*" Margin="16,0">
+
+                <!--
+                    Trái: bài đang phát.
+                    Dùng Grid chứ không StackPanel ngang: StackPanel cho con tự do lấy
+                    bề rộng theo nội dung, nên dòng trạng thái dài sẽ tràn sang đè lên
+                    cụm nút ở giữa. Cột "*" của Grid ép nội dung nằm trong phần còn lại,
+                    nhờ đó TextTrimming mới thật sự cắt được chữ.
+                -->
+                <Grid Grid.Column="0" ColumnDefinitions="Auto,*" VerticalAlignment="Center" Margin="0,0,12,0">
+                    <ctrl:ArtworkImage Grid.Column="0" Width="48" Height="48" Radius="5" DecodeWidth="128"
+                                       VerticalAlignment="Center" Margin="0,0,10,0"
+                                       Hash="{Binding CurrentTrack.ArtworkHash}" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                        <TextBlock Text="{Binding CurrentTrack.Title, FallbackValue='Chưa phát bài nào'}"
+                                   FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding CurrentTrack.DisplayArtist, FallbackValue=''}"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   FontSize="{StaticResource FontSizeSmall}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding StatusMessage}"
+                                   Foreground="{DynamicResource TextTertiary}"
+                                   FontSize="{StaticResource FontSizeSmall}"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Giữa: nút điều khiển + thanh tua -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2" Width="420">
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+                        <!--
+                            Icon shuffle/repeat dùng Stroke chứ không Fill: chúng là đường nét
+                            hở, tô đặc sẽ ra khối đen vô nghĩa. Ngược lại prev/play/next là
+                            hình khối đặc nên dùng Fill.
+                        -->
+                        <Button Classes="transport" Command="{Binding ToggleShuffleCommand}"
+                                Classes.toggled="{Binding Shuffle}" ToolTip.Tip="Phát ngẫu nhiên">
+                            <Path Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.4"
+                                  StrokeLineCap="Round" StrokeJoin="Round" Width="16" Height="14"
+                                  Data="M1,3 L4,3 L11,11 L15,11 M12.5,8.5 L15,11 L12.5,13.5
+                                        M1,11 L4,11 L6,8.7 M9.2,5.2 L11,3 L15,3 M12.5,0.5 L15,3 L12.5,5.5" />
+                        </Button>
+
+                        <Button Classes="transport" Command="{Binding PreviousCommand}" ToolTip.Tip="Bài trước">
+                            <Path Fill="{Binding $parent[Button].Foreground}" Width="14" Height="14"
+                                  Data="M2,1 L4,1 L4,13 L2,13 Z M13,1 L13,13 L5,7 Z" />
+                        </Button>
+
+                        <Button Classes="transport" Command="{Binding TogglePlayPauseCommand}"
+                                Width="34" Height="34" ToolTip.Tip="Phát / Tạm dừng">
+                            <Panel>
+                                <Path Fill="{Binding $parent[Button].Foreground}" Width="14" Height="16"
+                                      Data="M1,0 L14,8 L1,16 Z"
+                                      IsVisible="{Binding !IsPlaying}" />
+                                <Path Fill="{Binding $parent[Button].Foreground}" Width="12" Height="16"
+                                      Data="M0,0 L4,0 L4,16 L0,16 Z M8,0 L12,0 L12,16 L8,16 Z"
+                                      IsVisible="{Binding IsPlaying}" />
+                            </Panel>
+                        </Button>
+
+                        <Button Classes="transport" Command="{Binding NextCommand}" ToolTip.Tip="Bài kế">
+                            <Path Fill="{Binding $parent[Button].Foreground}" Width="14" Height="14"
+                                  Data="M12,1 L14,1 L14,13 L12,13 Z M3,1 L11,7 L3,13 Z" />
+                        </Button>
+
+                        <Button Classes="transport" Command="{Binding CycleRepeatCommand}"
+                                Classes.toggled="{Binding RepeatMode, Converter={x:Static conv:AppConverters.IsRepeatOn}}"
+                                ToolTip.Tip="Lặp lại">
+                            <Panel>
+                                <Path Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.4"
+                                      StrokeLineCap="Round" StrokeJoin="Round" Width="16" Height="14"
+                                      Data="M1,4 L13,4 M10.5,1.5 L13,4 L10.5,6.5
+                                            M15,10 L3,10 M5.5,7.5 L3,10 L5.5,12.5" />
+                                <TextBlock Text="1" FontSize="8" FontWeight="Bold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Foreground="{Binding $parent[Button].Foreground}"
+                                           IsVisible="{Binding RepeatMode, Converter={x:Static conv:AppConverters.IsRepeatOne}}" />
+                            </Panel>
+                        </Button>
+                    </StackPanel>
+
+                    <Grid ColumnDefinitions="40,*,40">
+                        <TextBlock Grid.Column="0" Text="{Binding PositionText}"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   FontSize="{StaticResource FontSizeSmall}"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <Slider Grid.Column="1" Classes="scrub"
+                                Minimum="0" Maximum="{Binding ScrubMaximum}"
+                                IsEnabled="{Binding CanScrub}"
+                                Value="{Binding PositionSeconds}" />
+                        <TextBlock Grid.Column="2" Text="{Binding DurationText}"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   FontSize="{StaticResource FontSizeSmall}"
+                                   VerticalAlignment="Center" Margin="8,0,0,0" />
+                    </Grid>
+                </StackPanel>
+
+                <!-- Phải: định dạng + âm lượng -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10"
+                            HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding FormatText}"
+                               Foreground="{DynamicResource TextTertiary}"
+                               FontSize="{StaticResource FontSizeSmall}"
+                               VerticalAlignment="Center" />
+                    <Slider Classes="scrub" Width="90" Minimum="0" Maximum="1"
+                            Value="{Binding Volume}" VerticalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
