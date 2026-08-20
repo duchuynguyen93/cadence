@@ -14,9 +14,9 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 
@@ -60,7 +60,15 @@ jobs:
           if (Get-ChildItem dist -Filter *.dylib) { throw "Có .dylib của macOS lọt vào bản Windows" }
           Write-Host "OK — native lib đầy đủ và đúng nền tảng"
 
-      - uses: actions/upload-artifact@v4
+      # continue-on-error có chủ đích: upload artifact phụ thuộc vào QUOTA LƯU TRỮ của
+      # tài khoản, không phản ánh code đúng hay sai. Hết quota mà để nó đánh đỏ cả lần
+      # chạy thì tín hiệu "build có lành mạnh không" bị nhiễu — trong khi các bước
+      # build/publish/kiểm tra native lib ở trên mới là thứ cần theo dõi.
+      # Bước này đỏ chỉ có nghĩa: không tải được bản build về, phải đi dọn quota.
+      - uses: actions/upload-artifact@v7
+        continue-on-error: true
         with:
           name: cadence-win-x64
           path: dist/
+          # Bản build dev không đáng giữ lâu; mặc định 90 ngày sẽ ăn hết quota rất nhanh.
+          retention-days: 7
