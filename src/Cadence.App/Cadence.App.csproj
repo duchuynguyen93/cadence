@@ -6,6 +6,9 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Icon của file .exe trên Windows. Icon cửa sổ đặt riêng ở MainWindow.axaml. -->
     <ApplicationIcon>Assets\Cadence.ico</ApplicationIcon>
+    <!-- Tên file thực thi. Mặc định là tên project (Cadence.App.exe), xấu ở
+         Task Manager và trong bộ cài. -->
+    <AssemblyName>Cadence</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   windows:
     # Build TRÊN Windows thật, không cross-compile từ Linux.
@@ -52,29 +55,61 @@ jobs:
       - name: Test
         run: dotnet test tests/Cadence.Core.Tests/Cadence.Core.Tests.csproj --no-build -c Release
 
+      # --self-contained true: bản cài phải chạy được trên máy trắng. Bản
+      # framework-dependent nhẹ hơn ~70MB nhưng đòi máy đích cài sẵn .NET 10
+      # Runtime, và "tải về, cài, không chạy được" là trải nghiệm tệ nhất có thể.
       - name: Publish win-x64
-        run: dotnet publish src/Cadence.App -c Release -r win-x64 --self-contained false -o dist
+        run: >-
+          dotnet publish src/Cadence.App -c Release -r win-x64
+          --self-contained true -o dist
 
       # Bảo hiểm cho bug đã từng dính: bản build thiếu bass.dll vẫn "thành công"
       # rồi crash lúc chạy. Kiểm luôn ở CI thay vì để người dùng phát hiện.
       - name: Kiểm tra native lib đã được đóng gói
         shell: pwsh
         run: |
-          $required = @('bass.dll', 'bassflac.dll', 'bassmix.dll', 'basswasapi.dll')
+          $required = @('bass.dll', 'bassflac.dll', 'bassmix.dll', 'basswasapi.dll', 'Cadence.exe')
           $missing = $required | Where-Object { -not (Test-Path "dist/$_") }
-          if ($missing) { throw "Bản publish thiếu native lib: $($missing -join ', ')" }
+          if ($missing) { throw "Bản publish thiếu: $($missing -join ', ')" }
           if (Get-ChildItem dist -Filter *.dylib) { throw "Có .dylib của macOS lọt vào bản Windows" }
           Write-Host "OK — native lib đầy đủ và đúng nền tảng"
 
-      # continue-on-error có chủ đích: upload artifact phụ thuộc vào QUOTA LƯU TRỮ của
-      # tài khoản, không phản ánh code đúng hay sai. Hết quota mà để nó đánh đỏ cả lần
-      # chạy thì tín hiệu "build có lành mạnh không" bị nhiễu — trong khi các bước
-      # build/publish/kiểm tra native lib ở trên mới là thứ cần theo dõi.
-      # Bước này đỏ chỉ có nghĩa: không tải được bản build về, phải đi dọn quota.
-      - uses: actions/upload-artifact@v7
-        continue-on-error: true
-        with:
-          name: cadence-win-x64
-          path: dist/
-          # Bản build dev không đáng giữ lâu; mặc định 90 ngày sẽ ăn hết quota rất nhanh.
-          retention-days: 7
+      - name: Đóng gói bộ cài
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { throw "Không tìm thấy Inno Setup 6 ở $iscc." }
+
+          & $iscc installer\Cadence.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC thoát với mã $LASTEXITCODE." }
+
+      # Đưa lên release thay vì artifact của Actions. Quota artifact dùng chung
+      # cho cả tài khoản (500MB gói Free) và một bản publish self-contained đủ
+      # lớn để vài lần chạy là hết — lúc đó bước upload đỏ và kéo cả job đỏ theo.
+      # Asset của release không tính vào quota đó và cho link tải cố định.
+      - name: Đóng gói bản portable
+        if: github.ref == 'refs/heads/main'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          Compress-Archive -Path "dist/*" -DestinationPath "artifacts/cadence-win-x64-portable.zip" -Force
+
+      - name: Phát hành bản build mới nhất
+        if: github.ref == 'refs/heads/main'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = 'build-latest'
+
+          # Tạo lại chứ không cập nhật: một asset cũ còn sót lại dưới cùng tên
+          # còn tệ hơn là không có asset nào, vì nó trông như bản mới.
+          gh release delete $tag --repo ${{ github.repository }} --yes --cleanup-tag 2>$null
+
+          gh release create $tag `
+            --repo ${{ github.repository }} `
+            --title "Bản build mới nhất" `
+            --notes "Build tự động từ ``$env:GITHUB_SHA``. Bản self-contained, không cần cài .NET." `
+            --prerelease `
+            "artifacts/installer/Cadence-*-setup.exe" `
+            "artifacts/cadence-win-x64-portable.zip"

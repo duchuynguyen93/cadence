@@ -23,3 +23,6 @@ native/linux-x64/*.so
 
 ## Icon nguồn cỡ lớn: giữ trong repo, KHÔNG nhúng vào app
 ## (icons/ là nơi xuất lại bộ icon khi cần, xem README)
+
+## Thư mục publish tạm khi đóng gói bộ cài
+dist/

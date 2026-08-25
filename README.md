@@ -99,12 +99,27 @@ export DOTNET_ROOT="$HOME/.dotnet" && export PATH="$DOTNET_ROOT:$PATH"
 
 ## Build cho Windows
 
+**Cách dễ nhất: tải bản cài sẵn.** Mỗi lần đẩy lên `main`, CI dựng bộ cài và
+đưa lên [release `build-latest`](../../releases/tag/build-latest) — bản
+self-contained nên máy đích không cần cài .NET.
+
+Bộ cài đưa lên release chứ không phải artifact của Actions: quota artifact dùng
+chung cho cả tài khoản (500MB gói Free), một bản self-contained đủ lớn để vài
+lần chạy là hết, và lúc đó bước upload đỏ kéo cả job đỏ theo dù code chẳng sai gì.
+
+Muốn dựng tay:
+
 ```bash
-dotnet publish src/Cadence.App -c Release -r win-x64 --self-contained false -o dist/
+dotnet publish src/Cadence.App -c Release -r win-x64 --self-contained true -o dist/
+# rồi trên Windows, có Inno Setup 6:
+ISCC.exe installer\Cadence.iss     # ra artifacts/installer/Cadence-*-setup.exe
 ```
 
-Chạy được cả từ macOS. Bản `--self-contained false` cần máy đích có .NET 10 Runtime;
-thêm `--self-contained true` để đóng gói kèm runtime (nặng hơn ~70MB nhưng chạy ngay).
+Publish chạy được cả từ macOS; riêng bước đóng gói bộ cài cần Windows.
+
+Bộ cài đặt theo từng người dùng, **không hỏi quyền quản trị**. Liên kết file là
+tuỳ chọn và mặc định tắt — và chỉ đăng ký những đuôi thật sự phát được, vì một
+đuôi file đã đăng ký mà mở không lên thì Windows đổ lỗi cho app.
 
 > **Đã dính bug này một lần:** phần copy native lib phải nằm trong `Cadence.App.csproj`,
 > không phải `Cadence.Audio.csproj` — `RuntimeIdentifier` không lan xuống class library,

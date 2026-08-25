@@ -15,6 +15,9 @@
             Thứ tự này quan trọng: đảo lại thì Fluent sẽ ghi đè và mọi thứ trông như Windows.
         -->
         <FluentTheme />
-        <StyleInclude Source="avares://Cadence.App/Styles/Theme.axaml" />
+        <!-- Đường dẫn tương đối, không phải avares://<tên-assembly>/... : dạng
+             tuyệt đối gắn chết tên assembly vào XAML, và đổi AssemblyName sẽ
+             làm hỏng nó lúc build với một thông báo chẳng liên quan gì. -->
+        <StyleInclude Source="/Styles/Theme.axaml" />
     </Application.Styles>
 </Application>
