@@ -9,6 +9,7 @@
         x:Class="Cadence.App.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="Cadence"
+        Icon="/Assets/Cadence.png"
         Width="1000" Height="640"
         MinWidth="720" MinHeight="440"
         Background="{DynamicResource WindowBackground}"

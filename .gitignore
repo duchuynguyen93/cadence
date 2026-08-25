@@ -20,3 +20,6 @@ native/linux-x64/*.so
 
 # macOS
 .DS_Store
+
+## Icon nguồn cỡ lớn: giữ trong repo, KHÔNG nhúng vào app
+## (icons/ là nơi xuất lại bộ icon khi cần, xem README)

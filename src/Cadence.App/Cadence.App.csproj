@@ -4,6 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Icon của file .exe trên Windows. Icon cửa sổ đặt riêng ở MainWindow.axaml. -->
+    <ApplicationIcon>Assets\Cadence.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
