@@ -32,7 +32,14 @@
         giao thông của ta không; nếu có thì phải chỉnh WindowDecorationsTheme.
     -->
 
-    <Grid RowDefinitions="38,*,74">
+    <!--
+        Hai bố cục nằm chồng nhau, mỗi lúc chỉ một cái hiện. Dùng Panel chứ không
+        đổi Content trong code-behind: cả hai cùng bind vào một ViewModel nên
+        chuyển qua lại không làm mất trạng thái nào, và nhạc không hề gián đoạn.
+    -->
+    <Panel>
+
+    <Grid Name="FullView" RowDefinitions="38,*,74" IsVisible="{Binding !IsMiniMode}">
 
         <!-- ══ Thanh tiêu đề ═══════════════════════════════════════════════
              PointerPressed ở code-behind cho phép kéo cửa sổ bằng vùng trống này,
@@ -55,10 +62,21 @@
                            FontSize="{StaticResource FontSizeBody}" FontWeight="SemiBold"
                            Foreground="{DynamicResource TextSecondary}" />
 
-                <TextBox Grid.Column="2" Classes="search" Width="200" Margin="0,0,16,0"
-                         VerticalAlignment="Center"
-                         Watermark="Tìm bài hát, nghệ sĩ, album"
-                         Text="{Binding SearchText}" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6"
+                            VerticalAlignment="Center" Margin="0,0,14,0">
+                    <TextBox Classes="search" Width="220"
+                             VerticalAlignment="Center"
+                             PlaceholderText="Tìm bài hát, nghệ sĩ, album"
+                             Text="{Binding SearchText}" />
+
+                    <!-- Thu gọn: hai góc đối nhau chụm vào trong -->
+                    <Button Classes="transport" Command="{Binding ToggleMiniModeCommand}"
+                            Padding="6" ToolTip.Tip="Thu gọn cửa sổ">
+                        <Path Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.4"
+                              StrokeLineCap="Round" StrokeJoin="Round" Width="14" Height="14"
+                              Data="M6,1 L6,6 L1,6 M8,13 L8,8 L13,8" />
+                    </Button>
+                </StackPanel>
             </Grid>
         </Border>
 
@@ -89,7 +107,7 @@
 
             <!-- Danh sách bài -->
             <Border Grid.Column="1" Background="{DynamicResource ContentBackground}"
-                    CornerRadius="10,0,0,0" BorderThickness="1,1,0,0"
+                    CornerRadius="14,0,0,0" BorderThickness="1,1,0,0"
                     BorderBrush="{DynamicResource Separator}">
                 <Grid RowDefinitions="28,*">
 
@@ -115,7 +133,7 @@
                                                Foreground="{DynamicResource TextTertiary}"
                                                Text="{Binding TrackNumber, Converter={x:Static conv:AppConverters.BlankIfZero}}" />
                                     <!-- DecodeWidth=64 cho ô 26px: dư gấp đôi để màn hình DPI cao không bị vỡ ảnh. -->
-                                    <ctrl:ArtworkImage Grid.Column="1" Width="26" Height="26" Radius="3"
+                                    <ctrl:ArtworkImage Grid.Column="1" Width="26" Height="26" Radius="4"
                                                        DecodeWidth="64" VerticalAlignment="Center"
                                                        HorizontalAlignment="Left"
                                                        Hash="{Binding ArtworkHash}" />
@@ -162,7 +180,7 @@
                     nhờ đó TextTrimming mới thật sự cắt được chữ.
                 -->
                 <Grid Grid.Column="0" ColumnDefinitions="Auto,*" VerticalAlignment="Center" Margin="0,0,12,0">
-                    <ctrl:ArtworkImage Grid.Column="0" Width="48" Height="48" Radius="5" DecodeWidth="128"
+                    <ctrl:ArtworkImage Grid.Column="0" Width="48" Height="48" Radius="8" DecodeWidth="128"
                                        VerticalAlignment="Center" Margin="0,0,10,0"
                                        Hash="{Binding CurrentTrack.ArtworkHash}" />
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
@@ -201,14 +219,23 @@
                                   Data="M2,1 L4,1 L4,13 L2,13 Z M13,1 L13,13 L5,7 Z" />
                         </Button>
 
-                        <Button Classes="transport" Command="{Binding TogglePlayPauseCommand}"
-                                Width="34" Height="34" ToolTip.Tip="Phát / Tạm dừng">
+                        <!--
+                            Nút phát là hình tròn hổ phách đặc duy nhất trên cả bề mặt.
+                            Ký hiệu bên trong lấy màu nền cửa sổ nên trông như được
+                            khoét ra khỏi đĩa màu, thay vì vẽ đè lên.
+                            Tam giác play lệch phải 1px: trọng tâm hình tam giác nằm
+                            lệch trái so với hộp bao, canh giữa theo hộp sẽ trông như
+                            bị dịch trái.
+                        -->
+                        <Button Classes="transport primary" Command="{Binding TogglePlayPauseCommand}"
+                                Margin="4,0" ToolTip.Tip="Phát / Tạm dừng">
                             <Panel>
-                                <Path Fill="{Binding $parent[Button].Foreground}" Width="14" Height="16"
-                                      Data="M1,0 L14,8 L1,16 Z"
+                                <Path Fill="{Binding $parent[Button].Foreground}" Width="13" Height="15"
+                                      Margin="1,0,0,0"
+                                      Data="M1,0 L13,7.5 L1,15 Z"
                                       IsVisible="{Binding !IsPlaying}" />
-                                <Path Fill="{Binding $parent[Button].Foreground}" Width="12" Height="16"
-                                      Data="M0,0 L4,0 L4,16 L0,16 Z M8,0 L12,0 L12,16 L8,16 Z"
+                                <Path Fill="{Binding $parent[Button].Foreground}" Width="11" Height="14"
+                                      Data="M0,0 L3.5,0 L3.5,14 L0,14 Z M7.5,0 L11,0 L11,14 L7.5,14 Z"
                                       IsVisible="{Binding IsPlaying}" />
                             </Panel>
                         </Button>
@@ -234,18 +261,14 @@
                         </Button>
                     </StackPanel>
 
-                    <Grid ColumnDefinitions="40,*,40">
-                        <TextBlock Grid.Column="0" Text="{Binding PositionText}"
-                                   Foreground="{DynamicResource TextSecondary}"
-                                   FontSize="{StaticResource FontSizeSmall}"
+                    <Grid ColumnDefinitions="44,*,44">
+                        <TextBlock Grid.Column="0" Classes="timecode" Text="{Binding PositionText}"
                                    HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" />
                         <Slider Grid.Column="1" Classes="scrub"
                                 Minimum="0" Maximum="{Binding ScrubMaximum}"
                                 IsEnabled="{Binding CanScrub}"
                                 Value="{Binding PositionSeconds}" />
-                        <TextBlock Grid.Column="2" Text="{Binding DurationText}"
-                                   Foreground="{DynamicResource TextSecondary}"
-                                   FontSize="{StaticResource FontSizeSmall}"
+                        <TextBlock Grid.Column="2" Classes="timecode" Text="{Binding DurationText}"
                                    VerticalAlignment="Center" Margin="8,0,0,0" />
                     </Grid>
                 </StackPanel>
@@ -263,4 +286,89 @@
             </Grid>
         </Border>
     </Grid>
+
+    <!-- ══ Chế độ thu gọn ═══════════════════════════════════════════════════
+         Chỉ giữ lại thứ cần khi cửa sổ nằm cạnh việc khác: đang phát bài gì, và
+         cụm nút để can thiệp. Bỏ shuffle/repeat/âm lượng — đó là những thứ chỉnh
+         một lần rồi thôi, không đáng chiếm chỗ ở kích thước này. -->
+    <Grid Name="MiniView" RowDefinitions="30,*,30" IsVisible="{Binding IsMiniMode}"
+          Background="{DynamicResource WindowBackground}">
+
+        <Border Grid.Row="0" Name="MiniTitleBar" Background="Transparent">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Border Grid.Column="0" Name="MiniTrafficCluster" Classes="trafficCluster active"
+                        Margin="14,0,0,0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Classes="traffic close"    Name="MiniCloseButton"    />
+                        <Button Classes="traffic minimise" Name="MiniMinimiseButton" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Mở rộng: hai góc đối nhau bung ra ngoài — nghịch đảo của nút thu gọn -->
+                <Button Grid.Column="2" Classes="transport" Command="{Binding ToggleMiniModeCommand}"
+                        Padding="6" Margin="0,0,10,0" ToolTip.Tip="Mở rộng cửa sổ">
+                    <Path Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.4"
+                          StrokeLineCap="Round" StrokeJoin="Round" Width="14" Height="14"
+                          Data="M1,5 L1,1 L5,1 M13,9 L13,13 L9,13" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="14,0,10,0">
+            <ctrl:ArtworkImage Grid.Column="0" Width="52" Height="52" Radius="8" DecodeWidth="128"
+                               VerticalAlignment="Center" Margin="0,0,10,0"
+                               Hash="{Binding CurrentTrack.ArtworkHash}" />
+
+            <!--
+                Cột "*" chứ không StackPanel: tên bài dài phải bị cắt bằng dấu ba
+                chấm, không được đẩy cụm nút ra khỏi cửa sổ.
+            -->
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                <TextBlock Text="{Binding CurrentTrack.Title, FallbackValue='Chưa phát bài nào'}"
+                           FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{Binding CurrentTrack.DisplayArtist, FallbackValue=''}"
+                           Foreground="{DynamicResource TextSecondary}"
+                           FontSize="{StaticResource FontSizeSmall}"
+                           TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2"
+                        VerticalAlignment="Center" Margin="8,0,0,0">
+                <Button Classes="transport" Command="{Binding PreviousCommand}" ToolTip.Tip="Bài trước">
+                    <Path Fill="{Binding $parent[Button].Foreground}" Width="12" Height="12"
+                          Data="M2,1 L3.7,1 L3.7,11 L2,11 Z M11,1 L11,11 L4.5,6 Z" />
+                </Button>
+
+                <Button Classes="transport primary" Width="34" Height="34" CornerRadius="17"
+                        Command="{Binding TogglePlayPauseCommand}" ToolTip.Tip="Phát / Tạm dừng">
+                    <Panel>
+                        <Path Fill="{Binding $parent[Button].Foreground}" Width="11" Height="13"
+                              Margin="1,0,0,0" Data="M1,0 L11,6.5 L1,13 Z"
+                              IsVisible="{Binding !IsPlaying}" />
+                        <Path Fill="{Binding $parent[Button].Foreground}" Width="9" Height="12"
+                              Data="M0,0 L3,0 L3,12 L0,12 Z M6,0 L9,0 L9,12 L6,12 Z"
+                              IsVisible="{Binding IsPlaying}" />
+                    </Panel>
+                </Button>
+
+                <Button Classes="transport" Command="{Binding NextCommand}" ToolTip.Tip="Bài kế">
+                    <Path Fill="{Binding $parent[Button].Foreground}" Width="12" Height="12"
+                          Data="M9.3,1 L11,1 L11,11 L9.3,11 Z M2,1 L8.5,6 L2,11 Z" />
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="2" ColumnDefinitions="42,*,42" Margin="14,0,14,4">
+            <TextBlock Grid.Column="0" Classes="timecode" Text="{Binding PositionText}"
+                       HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <Slider Grid.Column="1" Classes="scrub"
+                    Minimum="0" Maximum="{Binding ScrubMaximum}"
+                    IsEnabled="{Binding CanScrub}"
+                    Value="{Binding PositionSeconds}" />
+            <TextBlock Grid.Column="2" Classes="timecode" Text="{Binding DurationText}"
+                       VerticalAlignment="Center" Margin="8,0,0,0" />
+        </Grid>
+    </Grid>
+
+    </Panel>
 </Window>

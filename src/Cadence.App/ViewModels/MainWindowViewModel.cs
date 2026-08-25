@@ -100,6 +100,15 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     /// <summary>Bài đang được chọn trong danh sách (một cú click), khác với bài đang phát.</summary>
     [ObservableProperty] private Track? _selectedTrack;
 
+    /// <summary>
+    /// Chế độ thu gọn: chỉ còn ảnh bìa, tên bài và cụm nút phát.
+    ///
+    /// Cố tình KHÔNG lưu vào settings. Mở app lần sau mà hiện ra một cửa sổ tí
+    /// hon không có danh sách nhạc thì người dùng sẽ tưởng app hỏng — trong khi
+    /// cái giá của việc không nhớ chỉ là một cú bấm.
+    /// </summary>
+    [ObservableProperty] private bool _isMiniMode;
+
     public bool HasLibrary => _allTracks.Count > 0;
     public string FormatText => _playback.CurrentFormat?.ToString() ?? string.Empty;
 
@@ -181,6 +190,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
     [RelayCommand]
     private void ToggleShuffle() => Shuffle = !Shuffle;
+
+    [RelayCommand]
+    private void ToggleMiniMode() => IsMiniMode = !IsMiniMode;
 
     [RelayCommand]
     private void CycleRepeat() => RepeatMode = RepeatMode switch

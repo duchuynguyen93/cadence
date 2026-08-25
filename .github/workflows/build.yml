@@ -46,6 +46,12 @@ jobs:
       - name: Build
         run: dotnet build --no-restore -c Release
 
+      # Cadence.Core không phụ thuộc UI lẫn BASS nên test chạy ở đâu cũng được.
+      # Đặt ngay sau build và TRƯỚC publish: một lỗi logic hàng đợi thì không
+      # đáng đóng gói ra artifact.
+      - name: Test
+        run: dotnet test tests/Cadence.Core.Tests/Cadence.Core.Tests.csproj --no-build -c Release
+
       - name: Publish win-x64
         run: dotnet publish src/Cadence.App -c Release -r win-x64 --self-contained false -o dist
 

@@ -1,7 +1,10 @@
 # Cadence
 
-Trình phát nhạc local cho Windows, giao diện dựng theo ngôn ngữ thiết kế macOS.
-Chỉ nhạc — không video.
+Trình phát nhạc local cho Windows. Chỉ nhạc — không video.
+
+Giao diện theo cùng ngôn ngữ thiết kế với [Nocturne](https://github.com/duchuynguyen93/Nocturne),
+trình phát video cùng nhà: nền gần đen, đúng một màu nhấn hổ phách, bo góc nhẹ.
+Hai app trông cùng một họ là chủ ý.
 
 **Stack:** .NET 10 · Avalonia 12 · BASS (un4seen) · SQLite
 
@@ -11,7 +14,7 @@ Chỉ nhạc — không video.
 
 | Quyết định | Lý do |
 |---|---|
-| **Avalonia** thay vì WinUI/WPF | Mục tiêu là giao diện *macOS* chạy trên Windows, tức là chủ động từ chối ngôn ngữ thiết kế Fluent. Avalonia tự vẽ toàn bộ bằng Skia nên toàn quyền kiểm soát pixel. |
+| **Avalonia** thay vì WinUI/WPF | Giao diện chủ động từ chối ngôn ngữ Fluent của Windows. Avalonia tự vẽ toàn bộ bằng Skia nên toàn quyền kiểm soát pixel, và selector kiểu CSS làm việc dựng look riêng dễ hơn hẳn so với ghi đè template của WinUI. Thêm nữa: app này không có bề mặt video, nên lý do duy nhất khiến Nocturne phải dùng WinUI (`SwapChainPanel` để phủ XAML lên video) không tồn tại ở đây. |
 | **Avalonia** thay vì Tauri/Electron | Không phụ thuộc WebView2, không có ranh giới IPC giữa audio thread và UI (quan trọng cho visualizer 60fps), RAM thấp hơn. |
 | Render bằng Skia | App chạy trên macOS và Windows ra **pixel giống hệt nhau** — dev trên Mac không còn rủi ro "trên máy tao chạy ngon". |
 | **BASS** thay vì NAudio thuần | NAudio miễn phí nhưng thiếu decoder cho ALAC/AAC. BASS phủ đủ codec và có gapless playback đúng nghĩa. |
@@ -27,7 +30,32 @@ src/
 │   └── Playback/     PlaybackQueue (shuffle/repeat), PlaybackService (điều phối)
 ├── Cadence.Audio/    Hiện thực IAudioEngine bằng BASS
 └── Cadence.App/      Avalonia — Views, ViewModels, Styles
+
+tests/
+└── Cadence.Core.Tests/   52 test, chạy được trên mọi nền tảng
 ```
+
+## Chạy test
+
+```bash
+dotnet test tests/Cadence.Core.Tests/Cadence.Core.Tests.csproj
+```
+
+Chỉ phủ `Cadence.Core` — và đó là chủ ý, không phải thiếu sót. Core không phụ
+thuộc UI lẫn BASS nên test chạy trong vài trăm mili giây ở bất kỳ đâu, không cần
+thiết bị âm thanh, không cần cửa sổ.
+
+Ranh giới của cái test được và cái không:
+
+| Test được ở đây | Cần máy thật / tai người |
+|---|---|
+| Hàng đợi, shuffle, repeat, con trỏ phát | Gapless có thật sự liền mạch không |
+| Gom album, xử lý tag thiếu | Giải mã đúng từng codec |
+| Vòng đời SQLite: upsert, quét lại, xoá | Bố cục và bảng màu |
+
+`PlaybackQueue` nhận `Random` từ ngoài chính là để test dựng lại được đúng một
+thứ tự shuffle đã cho — nếu không, mọi khẳng định về shuffle chỉ kiểm được tính
+chất chung.
 
 ### `IAudioEngine` — ranh giới cần giữ
 
@@ -90,12 +118,14 @@ thêm `--self-contained true` để đóng gói kèm runtime (nặng hơn ~70MB 
 ### Đã chạy và đã kiểm chứng
 - [x] Quét thư mục, đọc tag, index SQLite (bỏ qua file không đổi mtime)
 - [x] Phát / tạm dừng / tua / chuyển bài, âm lượng theo thang cảm nhận
-- [x] **Gapless playback** — verify bằng test đo tần số qua FFT trước/sau lúc chuyển bài, chạy được cả khi chuyển MP3 → FLAC
+- [x] **Gapless playback** — kiểm bằng tai trên máy thật, gồm cả lúc chuyển MP3 → FLAC. Chưa có test tự động: nó cần phát ra thiết bị âm thanh thật rồi đo lại, tức là một dàn test khác hẳn với `Cadence.Core.Tests`.
 - [x] Giải mã MP3, FLAC, WAV, ALAC/AAC (FLAC qua plugin `bassflac`)
 - [x] **Ảnh bìa** — ưu tiên ảnh nhúng trong file, không có thì lấy `cover.jpg`/`folder.jpg`… cùng thư mục; hiện ở danh sách và thanh phát, có ô giữ chỗ khi không có ảnh
 - [x] Shuffle (Fisher–Yates, giữ nguyên bài đang phát khi bật/tắt), repeat off/all/one
 - [x] Tìm kiếm theo tên bài / nghệ sĩ / album
-- [x] Giao diện kiểu macOS: đèn giao thông tự vẽ, title bar tuỳ biến, sáng/tối theo hệ thống
+- [x] Đèn giao thông tự vẽ, title bar tuỳ biến, sáng/tối theo hệ thống
+- [x] **Chế độ thu gọn** — cửa sổ co còn 420×132, nổi trên cùng, chỉ còn ảnh bìa + tên bài + prev/play/next. Bấm nút ở góc phải title bar. Hai bố cục cùng bind một ViewModel nên chuyển qua lại không làm nhạc gián đoạn.
+- [x] **52 test** cho `Cadence.Core` — hàng đợi, shuffle, repeat, gom album, vòng đời SQLite. Chạy trên mọi nền tảng, có trong CI.
 
 ### Chưa làm
 - [ ] **WASAPI exclusive mode / bit-perfect** — cần đổi đường xuất sang BASSWASAPI, không dùng `Bass.Init` nữa

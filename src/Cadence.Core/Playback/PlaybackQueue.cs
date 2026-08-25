@@ -14,7 +14,20 @@ public sealed class PlaybackQueue
 {
     private readonly List<Track> _tracks = [];
     private readonly List<int> _order = [];
-    private readonly Random _random = new();
+    private readonly Random _random;
+
+    public PlaybackQueue() : this(Random.Shared) { }
+
+    /// <param name="random">
+    /// Nguồn ngẫu nhiên cho shuffle. Nhận từ ngoài để test dựng lại được đúng
+    /// một thứ tự đã cho — nếu không, mọi khẳng định về shuffle chỉ kiểm được
+    /// tính chất chung, không kiểm được thứ tự cụ thể.
+    /// </param>
+    public PlaybackQueue(Random random)
+    {
+        ArgumentNullException.ThrowIfNull(random);
+        _random = random;
+    }
 
     /// <summary>Vị trí trong <c>_order</c>, KHÔNG phải trong <c>_tracks</c>. -1 = chưa phát gì.</summary>
     private int _cursor = -1;
