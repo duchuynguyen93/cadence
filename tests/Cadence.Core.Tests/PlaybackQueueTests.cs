@@ -252,6 +252,98 @@ public sealed class PlaybackQueueTests
         Assert.Null(queue.Current);
     }
 
+    // ── Append: mở file bằng "Open with" rồi nối hàng xóm vào sau ───────────
+
+    [Fact]
+    public void Append_khong_lam_gian_doan_bai_dang_phat()
+    {
+        var queue = new PlaybackQueue(new Random(11));
+        queue.Load([TrackFactory.Make("dang-phat")], 0);
+
+        queue.Append(TrackFactory.Sequence(3));
+
+        // Đây là toàn bộ lý do Append tồn tại: gọi Load ở bước hai sẽ cắt ngang
+        // chính bài vừa bắt đầu phát.
+        Assert.Equal("dang-phat", queue.Current!.Title);
+        Assert.Equal(0, queue.CurrentIndex);
+        Assert.Equal(4, queue.Count);
+    }
+
+    [Fact]
+    public void Append_lam_bai_ke_co_tro_lai()
+    {
+        var queue = new PlaybackQueue(new Random(11));
+        queue.Load([TrackFactory.Make("dang-phat")], 0);
+        Assert.Null(queue.PeekNext());
+
+        queue.Append(TrackFactory.Sequence(2));
+
+        Assert.NotNull(queue.PeekNext());
+        Assert.True(queue.MoveNext(userInitiated: true));
+        Assert.Equal("1", queue.Current!.Title);
+    }
+
+    [Fact]
+    public void Append_vao_queue_rong_thi_co_bai_hien_tai()
+    {
+        var queue = new PlaybackQueue(new Random(11));
+        queue.Load([]);
+
+        queue.Append(TrackFactory.Sequence(2));
+
+        Assert.NotNull(queue.Current);
+        Assert.Equal(0, queue.CurrentIndex);
+    }
+
+    [Fact]
+    public void Append_danh_sach_rong_khong_lam_gi_ca()
+    {
+        var queue = Loaded();
+        var before = queue.Current;
+        var events = 0;
+        queue.QueueChanged += (_, _) => events++;
+
+        queue.Append([]);
+
+        Assert.Equal(3, queue.Count);
+        Assert.Equal(before, queue.Current);
+        Assert.Equal(0, events);
+    }
+
+    [Fact]
+    public void Append_giu_nguyen_thu_tu_hien_thi()
+    {
+        var queue = Loaded();
+
+        queue.Append([TrackFactory.Make("moi")]);
+
+        Assert.Equal(["1", "2", "3", "moi"], queue.Tracks.Select(t => t.Title));
+    }
+
+    [Fact]
+    public void Append_khi_dang_shuffle_khong_dua_bai_da_nghe_ra_truoc()
+    {
+        var queue = new PlaybackQueue(new Random(5));
+        queue.Load(TrackFactory.Sequence(4), 0);
+        queue.Shuffle = true;
+
+        var played = new List<string> { queue.Current!.Title };
+        queue.MoveNext(userInitiated: true);
+        played.Add(queue.Current!.Title);
+
+        queue.Append([TrackFactory.Make("moi-1"), TrackFactory.Make("moi-2")]);
+
+        // Phần chưa phát được tráo lại, nhưng bài đã nghe phải nằm yên phía sau
+        // con trỏ — nếu không chúng sẽ được phát lại trong cùng một lượt.
+        var remaining = new List<string>();
+        while (queue.MoveNext(userInitiated: true)) remaining.Add(queue.Current!.Title);
+
+        Assert.DoesNotContain(played[0], remaining);
+        Assert.DoesNotContain(played[1], remaining);
+        Assert.Equal(4, remaining.Count);
+        Assert.Equal(4, remaining.Distinct().Count());
+    }
+
     // ── JumpTo và Clear ─────────────────────────────────────────────────────
 
     [Fact]

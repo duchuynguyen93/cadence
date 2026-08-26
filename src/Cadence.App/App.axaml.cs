@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -42,13 +44,42 @@ public partial class App : Application
             // trên UI thread, chứ không phải trong một Task nền.
             _playback = new PlaybackService(new BassAudioEngine());
 
-            _viewModel = new MainWindowViewModel(_playback, _database, scanner, settings);
+            _viewModel = new MainWindowViewModel(_playback, _database, scanner, metadataReader, settings);
 
             desktop.MainWindow = new MainWindow { DataContext = _viewModel };
             desktop.ShutdownRequested += OnShutdownRequested;
+
+            // File truyền qua dòng lệnh: "Open with", kéo thả lên icon, hoặc
+            // double-click một đuôi file đã liên kết. Bộ cài đăng ký lệnh mở là
+            // `Cadence.exe "%1"`, nên nếu không đọc chỗ này thì app mở lên rồi
+            // ngồi im — đúng như báo cáo từ máy thật.
+            //
+            // Không await: OnFrameworkInitializationCompleted phải trả về để cửa
+            // sổ hiện lên. Đọc tag chạy ở nền, phát ngay khi xong.
+            var startupFiles = ParseStartupFiles(desktop.Args);
+            if (startupFiles.Count > 0) _ = _viewModel.OpenPathsAsync(startupFiles);
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>
+    /// Lọc ra các đường dẫn file từ tham số dòng lệnh.
+    /// </summary>
+    /// <remarks>
+    /// Avalonia đã cắt bỏ argv[0] trước khi đưa vào <c>desktop.Args</c>, nên ở
+    /// đây không phải lo chuyện đường dẫn của chính file exe bị hiểu nhầm thành
+    /// file nhạc. Các tham số bắt đầu bằng '-' hoặc '/' bị bỏ qua để sau này
+    /// thêm cờ dòng lệnh không phá chỗ này.
+    /// </remarks>
+    private static IReadOnlyList<string> ParseStartupFiles(string[]? args)
+    {
+        if (args is null || args.Length == 0) return [];
+
+        return [.. args.Where(a =>
+            !string.IsNullOrWhiteSpace(a) &&
+            !a.StartsWith('-') &&
+            !a.StartsWith('/'))];
     }
 
     private void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs e)

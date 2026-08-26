@@ -143,7 +143,10 @@ tuỳ chọn và mặc định tắt — và chỉ đăng ký những đuôi th�
   title bar (vẫn giữ viền, resize và snap), macOS dùng `Full` để hệ thống vẽ đèn
   giao thông thật rồi ẩn cụm tự vẽ đi
 - [x] **Chế độ thu gọn** — cửa sổ co còn 420×132, nổi trên cùng, chỉ còn ảnh bìa + tên bài + prev/play/next. Bấm nút ở góc phải title bar. Hai bố cục cùng bind một ViewModel nên chuyển qua lại không làm nhạc gián đoạn.
-- [x] **52 test** cho `Cadence.Core` — hàng đợi, shuffle, repeat, gom album, vòng đời SQLite. Chạy trên mọi nền tảng, có trong CI.
+- [x] **Mở file bằng "Open with" / double-click** — phát ngay bài được chọn, kể
+  cả khi nó chưa có trong thư viện, rồi nạp các bài cùng thư mục ở nền để
+  Next/Previous có nghĩa
+- [x] **58 test** cho `Cadence.Core` — hàng đợi, shuffle, repeat, gom album, vòng đời SQLite. Chạy trên mọi nền tảng, có trong CI.
 
 ### Chưa làm
 - [ ] **WASAPI exclusive mode / bit-perfect** — cần đổi đường xuất sang BASSWASAPI, không dùng `Bass.Init` nữa

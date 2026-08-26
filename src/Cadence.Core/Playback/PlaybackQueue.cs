@@ -166,6 +166,45 @@ public sealed class PlaybackQueue
         return true;
     }
 
+    /// <summary>
+    /// Nối thêm bài vào cuối danh sách mà KHÔNG động tới bài đang phát.
+    /// </summary>
+    /// <remarks>
+    /// Dùng khi mở một file bằng "Open with": bài đó phát ngay, còn các bài cùng
+    /// thư mục được đọc tag ở nền rồi nối vào sau. Gọi <see cref="Load"/> ở bước
+    /// hai sẽ cắt ngang chính bài vừa bắt đầu.
+    ///
+    /// Với shuffle, chỉ phần CHƯA phát được tráo lại. Tráo cả <c>_order</c> sẽ
+    /// làm các bài đã nghe nhảy ra phía trước con trỏ và bị phát lại.
+    /// </remarks>
+    public void Append(IEnumerable<Track> tracks, Random? random = null)
+    {
+        ArgumentNullException.ThrowIfNull(tracks);
+
+        var added = tracks.ToList();
+        if (added.Count == 0) return;
+
+        var firstNew = _tracks.Count;
+        _tracks.AddRange(added);
+        for (var i = firstNew; i < _tracks.Count; i++) _order.Add(i);
+
+        if (_shuffle)
+        {
+            var from = Math.Max(_cursor + 1, 0);
+            var source = random ?? _random;
+            for (var i = _order.Count - 1; i > from; i--)
+            {
+                var j = source.Next(from, i + 1);
+                (_order[i], _order[j]) = (_order[j], _order[i]);
+            }
+        }
+
+        // Queue đang rỗng trước đó thì đây là bài đầu tiên.
+        if (_cursor < 0 && _order.Count > 0) _cursor = 0;
+
+        QueueChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     /// <summary>Nhảy tới một bài cụ thể theo chỉ số trong <see cref="Tracks"/>.</summary>
     public bool JumpTo(int trackIndex)
     {

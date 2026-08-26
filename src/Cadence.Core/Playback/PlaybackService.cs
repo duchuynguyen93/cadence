@@ -80,6 +80,21 @@ public sealed class PlaybackService : IDisposable
         PlayCurrent();
     }
 
+    /// <summary>
+    /// Nối thêm bài vào hàng đợi, không đụng tới bài đang phát.
+    /// </summary>
+    /// <remarks>
+    /// Nếu chưa phát gì thì bài đầu tiên trong danh sách được nạp và phát luôn —
+    /// nếu không, "nối vào hàng đợi rỗng" sẽ im lặng chẳng làm gì.
+    /// </remarks>
+    public void Append(IEnumerable<Track> tracks)
+    {
+        var wasEmpty = Queue.Count == 0;
+        Queue.Append(tracks);
+
+        if (wasEmpty && Queue.Current is not null) PlayCurrent();
+    }
+
     public void TogglePlayPause()
     {
         switch (_engine.State)

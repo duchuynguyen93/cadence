@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,6 +20,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly PlaybackService _playback;
     private readonly LibraryDatabase _database;
     private readonly LibraryScanner _scanner;
+    private readonly TrackMetadataReader _metadataReader;
     private readonly AppSettings _settings;
     private readonly DispatcherTimer _tick;
 
@@ -38,11 +40,13 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         PlaybackService playback,
         LibraryDatabase database,
         LibraryScanner scanner,
+        TrackMetadataReader metadataReader,
         AppSettings settings)
     {
         _playback = playback;
         _database = database;
         _scanner = scanner;
+        _metadataReader = metadataReader;
         _settings = settings;
 
         _volume = settings.Volume;
@@ -212,6 +216,80 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         if (index < 0) return;
 
         _playback.PlayList(VisibleTracks.ToList(), index);
+    }
+
+    /// <summary>
+    /// Phát các file được truyền từ dòng lệnh — "Open with", kéo thả lên icon,
+    /// hoặc double-click một file đã liên kết.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// File KHÔNG cần nằm trong thư viện. "Mở bằng Cadence" nghĩa là phát ngay
+    /// bài đó, không phải là một cái cớ để đi tổ chức lại thư viện của người
+    /// dùng, nên ở đây chỉ đọc tag của đúng những file được yêu cầu.
+    /// </para>
+    /// <para>
+    /// Các bài cùng thư mục được nạp SAU, ở nền, rồi nối vào hàng đợi. Đọc cả
+    /// thư mục trước khi phát sẽ biến một cú double-click thành vài giây chờ
+    /// trên thư mục lớn; nối vào sau thì nhạc kêu ngay mà Next/Previous vẫn có
+    /// nghĩa một nhịp sau đó.
+    /// </para>
+    /// </remarks>
+    public async Task OpenPathsAsync(IReadOnlyList<string> paths)
+    {
+        ArgumentNullException.ThrowIfNull(paths);
+
+        var requested = paths
+            .Where(p => !string.IsNullOrWhiteSpace(p) && TrackMetadataReader.IsSupportedFile(p))
+            .Where(File.Exists)
+            .ToList();
+
+        if (requested.Count == 0) return;
+
+        var opened = await Task.Run(() =>
+            requested.Select(_metadataReader.Read).OfType<Track>().ToList());
+
+        if (opened.Count == 0)
+        {
+            StatusMessage = $"Không đọc được: {Path.GetFileName(requested[0])}";
+            return;
+        }
+
+        _playback.PlayList(opened, 0);
+
+        // Chỉ mở rộng hàng đợi khi người dùng mở đúng một file. Mở nhiều file là
+        // họ đã tự chọn danh sách rồi, thêm hàng xóm vào là làm trái ý.
+        if (requested.Count == 1)
+        {
+            await AppendFolderSiblingsAsync(requested[0]);
+        }
+    }
+
+    /// <summary>Đọc các bài còn lại cùng thư mục và nối vào hàng đợi.</summary>
+    private async Task AppendFolderSiblingsAsync(string playingPath)
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(playingPath);
+            if (string.IsNullOrEmpty(directory)) return;
+
+            var siblings = await Task.Run(() => Directory
+                .EnumerateFiles(directory)
+                .Where(TrackMetadataReader.IsSupportedFile)
+                .Where(p => !string.Equals(p, playingPath, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase)
+                .Select(_metadataReader.Read)
+                .OfType<Track>()
+                .ToList());
+
+            if (siblings.Count > 0) _playback.Append(siblings);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            // Thư mục không đọc được — ổ mạng rớt, thiếu quyền. Bài người dùng
+            // yêu cầu vẫn đang phát; họ chỉ mất Next và Previous.
+            StatusMessage = $"Không đọc được thư mục: {error.Message}";
+        }
     }
 
     /// <summary>Thêm thư mục nhạc rồi quét. Đường dẫn do View chọn qua hộp thoại hệ thống.</summary>
