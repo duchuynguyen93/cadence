@@ -138,7 +138,10 @@ tuỳ chọn và mặc định tắt — và chỉ đăng ký những đuôi th�
 - [x] **Ảnh bìa** — ưu tiên ảnh nhúng trong file, không có thì lấy `cover.jpg`/`folder.jpg`… cùng thư mục; hiện ở danh sách và thanh phát, có ô giữ chỗ khi không có ảnh
 - [x] Shuffle (Fisher–Yates, giữ nguyên bài đang phát khi bật/tắt), repeat off/all/one
 - [x] Tìm kiếm theo tên bài / nghệ sĩ / album
-- [x] Đèn giao thông tự vẽ, title bar tuỳ biến, sáng/tối theo hệ thống
+- [x] Đèn giao thông tự vẽ, title bar tuỳ biến, sáng/tối theo hệ thống. Khung
+  cửa sổ đặt theo nền tảng: Windows dùng `BorderOnly` để hệ điều hành thôi vẽ
+  title bar (vẫn giữ viền, resize và snap), macOS dùng `Full` để hệ thống vẽ đèn
+  giao thông thật rồi ẩn cụm tự vẽ đi
 - [x] **Chế độ thu gọn** — cửa sổ co còn 420×132, nổi trên cùng, chỉ còn ảnh bìa + tên bài + prev/play/next. Bấm nút ở góc phải title bar. Hai bố cục cùng bind một ViewModel nên chuyển qua lại không làm nhạc gián đoạn.
 - [x] **52 test** cho `Cadence.Core` — hàng đợi, shuffle, repeat, gom album, vòng đời SQLite. Chạy trên mọi nền tảng, có trong CI.
 

@@ -15,22 +15,17 @@
         Background="{DynamicResource WindowBackground}"
         FontSize="{StaticResource FontSizeBody}"
         Foreground="{DynamicResource TextPrimary}"
-        ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaTitleBarHeightHint="-1"
-        WindowDecorations="Full">
+        ExtendClientAreaTitleBarHeightHint="-1">
 
     <!--
-        ExtendClientAreaToDecorationsHint đẩy nội dung lên chiếm cả vùng title bar,
-        còn TitleBarHeightHint="-1" nghĩa là "cao bao nhiêu tuỳ nội dung" — nhờ đó ta
-        tự vẽ được title bar kiểu macOS ở hàng đầu của Grid.
+        WindowDecorations và ExtendClientAreaToDecorationsHint được đặt trong
+        code-behind vì chúng phụ thuộc hệ điều hành — xem ApplyWindowChrome.
 
-        WindowDecorations="Full" giữ lại viền và bóng đổ của hệ điều hành, nên cửa sổ
-        vẫn resize và snap được như app Windows bình thường.
+        Tóm tắt: trên Windows dùng BorderOnly (giữ viền resize và snap, bỏ title
+        bar của hệ thống) rồi tự vẽ toàn bộ; trên macOS dùng Full và để hệ thống
+        vẽ đèn giao thông thật.
 
-        LƯU Ý: Avalonia 12 đã bỏ ExtendClientAreaChromeHints (cờ cũ dùng để ẩn nút
-        thu nhỏ/phóng to/đóng của Windows) và thay bằng cơ chế WindowDecorationsTheme.
-        Cần kiểm tra trên máy Windows xem nút hệ thống có còn hiện chồng lên cụm đèn
-        giao thông của ta không; nếu có thì phải chỉnh WindowDecorationsTheme.
+        TitleBarHeightHint="-1" nghĩa là "cao bao nhiêu tuỳ nội dung".
     -->
 
     <!--

@@ -29,8 +29,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        // Khung cửa sổ gốc đã bị gỡ (ExtendClientAreaChromeHints="NoChrome") nên
-        // toàn bộ hành vi của title bar phải tự nối lại bằng tay.
+        // Title bar do ta tự vẽ (xem ApplyWindowChrome) nên mọi hành vi của nó —
+        // kéo cửa sổ, đóng, thu nhỏ, phóng to — phải tự nối lại bằng tay.
         TitleBar.PointerPressed += OnTitleBarPressed;
         CloseButton.Click += (_, _) => Close();
         MinimiseButton.Click += (_, _) => WindowState = WindowState.Minimized;
@@ -53,15 +53,46 @@ public partial class MainWindow : Window
         Activated += (_, _) => SetTrafficActive(true);
         Deactivated += (_, _) => SetTrafficActive(false);
 
-        // Trên macOS hệ điều hành đã tự vẽ đèn giao thông thật ở đúng chỗ đó, nên
-        // cụm của ta sẽ chồng lên thành 6 chấm. App này ship cho Windows — bộ đèn
-        // tự vẽ chỉ cần thiết ở đó — nên ẩn đi khi chạy trên Mac để lúc dev nhìn
-        // vẫn giống thành phẩm.
+        ApplyWindowChrome();
+    }
+
+    /// <summary>
+    /// Quyết định ai vẽ khung cửa sổ: hệ điều hành hay chúng ta.
+    /// </summary>
+    /// <remarks>
+    /// Không thể đặt trong XAML vì câu trả lời khác nhau theo nền tảng, và đặt
+    /// sai thì hỏng theo hai kiểu ngược nhau.
+    /// <para>
+    /// Trên Windows, <c>WindowDecorations.Full</c> để hệ điều hành tiếp tục vẽ
+    /// title bar của nó. Cộng với <c>ExtendClientAreaToDecorationsHint</c>, nội
+    /// dung của ta bị kéo lên nằm DƯỚI khung đó: chữ tiêu đề của Windows đè lên
+    /// cụm đèn giao thông tự vẽ, và ba nút hệ thống đè lên ô tìm kiếm.
+    /// <c>BorderOnly</c> bỏ title bar nhưng giữ viền — nên vẫn resize, vẫn snap,
+    /// vẫn có bóng đổ, mà toàn bộ hàng trên cùng là của ta.
+    /// </para>
+    /// <para>
+    /// Trên macOS thì ngược lại: giữ <c>Full</c> để hệ điều hành vẽ đèn giao
+    /// thông thật ở đúng vị trí và đúng hành vi, rồi ẩn cụm tự vẽ đi — nếu không
+    /// sẽ thành sáu chấm chồng nhau. <c>BorderOnly</c> ở đây sẽ để lại một cửa
+    /// sổ không có nút đóng nào cả.
+    /// </para>
+    /// </remarks>
+    private void ApplyWindowChrome()
+    {
         if (OperatingSystem.IsMacOS())
         {
+            WindowDecorations = WindowDecorations.Full;
+            ExtendClientAreaToDecorationsHint = true;
             TrafficCluster.IsVisible = false;
             MiniTrafficCluster.IsVisible = false;
+            return;
         }
+
+        WindowDecorations = WindowDecorations.BorderOnly;
+
+        // Không còn khung hệ thống nào để kéo nội dung vào, và bật cờ này cùng
+        // BorderOnly là yêu cầu hai thứ mâu thuẫn nhau.
+        ExtendClientAreaToDecorationsHint = false;
     }
 
     private void SetTrafficActive(bool active)
