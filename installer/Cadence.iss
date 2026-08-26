@@ -10,6 +10,7 @@
 #define AppVersion "0.1.0"
 #define AppPublisher "Cadence"
 #define AppExeName "Cadence.exe"
+#define ProgId "Cadence.Audio"
 #define SourceDir "..\dist"
 
 [Setup]
@@ -26,6 +27,10 @@ OutputBaseFilename=Cadence-{#AppVersion}-x64-setup
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
+ChangesAssociations=yes
+; Bảo Inno phát SHCNE_ASSOCCHANGED sau khi cài. Thiếu dòng này thì Explorer
+; vẫn dùng bộ nhớ đệm liên kết cũ cho tới lần đăng nhập sau — cài xong thử
+; ngay sẽ thấy "không có tác dụng gì" dù registry đã đúng.
 SetupIconFile=..\src\Cadence.App\Assets\Cadence.ico
 UninstallDisplayIcon={app}\{#AppExeName}
 
@@ -44,7 +49,6 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Tạo lối tắt ngoài desktop"; GroupDescription: "Lối tắt:"
-Name: "associate"; Description: "Mở file nhạc bằng {#AppName}"; GroupDescription: "Liên kết file:"; Flags: unchecked
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -58,9 +62,9 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: deskto
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\{#AppExeName}"; \
     ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName}"; Flags: uninsdeletekey
 
-; Khai báo năng lực thay vì ghi thẳng khoá cho từng đuôi file. Nhờ vậy Windows
-; đưa Cadence vào "Open with" và mục Ứng dụng mặc định, chứ không âm thầm giành
-; lấy liên kết file của người dùng.
+; Khai báo năng lực: đây là thứ đưa app vào mục Ứng dụng mặc định trong Cài đặt.
+; Một mình nó KHÔNG đưa app vào menu "Open with" — bản đầu chỉ có mỗi cái này nên
+; phần liên kết file trông như chẳng làm gì. Xem ghi chú ba cơ chế phía dưới.
 Root: HKCU; Subkey: "Software\{#AppName}\Capabilities"; \
     ValueType: string; ValueName: "ApplicationName"; ValueData: "{#AppName}"; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\{#AppName}\Capabilities"; \
@@ -69,27 +73,56 @@ Root: HKCU; Subkey: "Software\RegisteredApplications"; \
     ValueType: string; ValueName: "{#AppName}"; ValueData: "Software\{#AppName}\Capabilities"; \
     Flags: uninsdeletevalue
 
-Root: HKCU; Subkey: "Software\Classes\{#AppName}.Audio"; \
+Root: HKCU; Subkey: "Software\Classes\{#ProgId}"; \
     ValueType: string; ValueName: ""; ValueData: "File nhạc"; Flags: uninsdeletekey
-Root: HKCU; Subkey: "Software\Classes\{#AppName}.Audio\DefaultIcon"; \
+Root: HKCU; Subkey: "Software\Classes\{#ProgId}\DefaultIcon"; \
     ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName},0"
-Root: HKCU; Subkey: "Software\Classes\{#AppName}.Audio\shell\open\command"; \
+Root: HKCU; Subkey: "Software\Classes\{#ProgId}\shell\open\command"; \
     ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""
 
-; CHỈ đăng ký những đuôi file thật sự phát được. .opus, .ape, .wv, .dsf cần
-; plugin BASS chưa bundle — scanner có index nhưng phát sẽ lỗi, mà một đuôi file
-; đã đăng ký rồi không mở được thì Windows đổ lỗi cho app. Danh sách này phải đi
-; cùng phần "Đã chạy và đã kiểm chứng" trong README.
-Root: HKCU; Subkey: "Software\{#AppName}\Capabilities\FileAssociations"; ValueType: string; ValueName: ".mp3";  ValueData: "{#AppName}.Audio"; Tasks: associate
-Root: HKCU; Subkey: "Software\{#AppName}\Capabilities\FileAssociations"; ValueType: string; ValueName: ".flac"; ValueData: "{#AppName}.Audio"; Tasks: associate
-Root: HKCU; Subkey: "Software\{#AppName}\Capabilities\FileAssociations"; ValueType: string; ValueName: ".wav";  ValueData: "{#AppName}.Audio"; Tasks: associate
-Root: HKCU; Subkey: "Software\{#AppName}\Capabilities\FileAssociations"; ValueType: string; ValueName: ".ogg";  ValueData: "{#AppName}.Audio"; Tasks: associate
-Root: HKCU; Subkey: "Software\{#AppName}\Capabilities\FileAssociations"; ValueType: string; ValueName: ".m4a";  ValueData: "{#AppName}.Audio"; Tasks: associate
-Root: HKCU; Subkey: "Software\{#AppName}\Capabilities\FileAssociations"; ValueType: string; ValueName: ".aac";  ValueData: "{#AppName}.Audio"; Tasks: associate
+; Ba cơ chế khác nhau, mỗi cái phục vụ một chỗ trong Windows. Thiếu bất kỳ
+; cái nào là app biến mất khỏi đúng chỗ đó, nên đừng gộp.
+;
+;   Capabilities\FileAssociations  -> mục Ứng dụng mặc định trong Cài đặt
+;   <đuôi>\OpenWithProgIds         -> menu "Open with" khi chuột phải
+;   Classes\Applications\<exe>     -> hộp thoại "Choose another app"
+;
+; Đăng ký KHÔNG điều kiện, không còn tick chọn. Xuất hiện trong "Open with"
+; là vô hại và đúng thứ người dùng mong đợi sau khi cố ý cài app; còn việc
+; ĐẶT LÀM MẶC ĐỊNH thì từ Windows 10 bộ cài không được phép tự làm nữa —
+; xem mục [Run] ở cuối file.
+Root: HKCU; Subkey: "Software\{#AppName}\Capabilities\FileAssociations"; ValueType: string; ValueName: ".mp3"; ValueData: "{#ProgId}"
+Root: HKCU; Subkey: "Software\{#AppName}\Capabilities\FileAssociations"; ValueType: string; ValueName: ".flac"; ValueData: "{#ProgId}"
+Root: HKCU; Subkey: "Software\{#AppName}\Capabilities\FileAssociations"; ValueType: string; ValueName: ".wav"; ValueData: "{#ProgId}"
+Root: HKCU; Subkey: "Software\{#AppName}\Capabilities\FileAssociations"; ValueType: string; ValueName: ".ogg"; ValueData: "{#ProgId}"
+Root: HKCU; Subkey: "Software\{#AppName}\Capabilities\FileAssociations"; ValueType: string; ValueName: ".m4a"; ValueData: "{#ProgId}"
+Root: HKCU; Subkey: "Software\{#AppName}\Capabilities\FileAssociations"; ValueType: string; ValueName: ".aac"; ValueData: "{#ProgId}"
+
+Root: HKCU; Subkey: "Software\Classes\.mp3\OpenWithProgIds"; ValueType: string; ValueName: "{#ProgId}"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.flac\OpenWithProgIds"; ValueType: string; ValueName: "{#ProgId}"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.wav\OpenWithProgIds"; ValueType: string; ValueName: "{#ProgId}"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.ogg\OpenWithProgIds"; ValueType: string; ValueName: "{#ProgId}"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.m4a\OpenWithProgIds"; ValueType: string; ValueName: "{#ProgId}"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Classes\.aac\OpenWithProgIds"; ValueType: string; ValueName: "{#ProgId}"; ValueData: ""; Flags: uninsdeletevalue
+
+Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExeName}"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "{#AppName}"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExeName}\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""
+Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExeName}\SupportedTypes"; ValueType: string; ValueName: ".mp3"; ValueData: ""
+Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExeName}\SupportedTypes"; ValueType: string; ValueName: ".flac"; ValueData: ""
+Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExeName}\SupportedTypes"; ValueType: string; ValueName: ".wav"; ValueData: ""
+Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExeName}\SupportedTypes"; ValueType: string; ValueName: ".ogg"; ValueData: ""
+Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExeName}\SupportedTypes"; ValueType: string; ValueName: ".m4a"; ValueData: ""
+Root: HKCU; Subkey: "Software\Classes\Applications\{#AppExeName}\SupportedTypes"; ValueType: string; ValueName: ".aac"; ValueData: ""
 
 [Run]
+
+; Windows 10 trở đi không cho bộ cài tự giành liên kết mặc định. Thứ duy nhất
+; làm được là mở đúng trang đó ra để người dùng tự chọn — trung thực hơn hẳn
+; một cái tick hứa điều không thể xảy ra.
 Filename: "{app}\{#AppExeName}"; Description: "Chạy {#AppName}"; \
     Flags: nowait postinstall skipifsilent
+Filename: "ms-settings:defaultapps"; Description: "Chọn {#AppName} làm trình phát mặc định (mở Cài đặt Windows)"; \
+    Flags: postinstall shellexec nowait skipifsilent unchecked
 
 [UninstallDelete]
 ; Thư viện đã index, ảnh bìa đã cache và settings đều nằm ở đây. Xoá lúc gỡ cài

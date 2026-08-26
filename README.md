@@ -117,9 +117,16 @@ ISCC.exe installer\Cadence.iss     # ra artifacts/installer/Cadence-*-setup.exe
 
 Publish chạy được cả từ macOS; riêng bước đóng gói bộ cài cần Windows.
 
-Bộ cài đặt theo từng người dùng, **không hỏi quyền quản trị**. Liên kết file là
-tuỳ chọn và mặc định tắt — và chỉ đăng ký những đuôi thật sự phát được, vì một
-đuôi file đã đăng ký mà mở không lên thì Windows đổ lỗi cho app.
+Bộ cài đặt theo từng người dùng, **không hỏi quyền quản trị**.
+
+Về liên kết file: bộ cài đăng ký để Cadence **xuất hiện trong menu "Open with"**
+và trong mục Ứng dụng mặc định của Windows — không có tick chọn, vì xuất hiện ở
+đó là vô hại. Nhưng nó **không tự đặt Cadence làm mặc định**: từ Windows 10,
+Microsoft không cho bộ cài làm việc đó nữa. Thứ duy nhất làm được là mở đúng
+trang Cài đặt để bạn tự chọn, và đó là tuỳ chọn ở bước cuối.
+
+Chỉ đăng ký những đuôi thật sự phát được — một đuôi đã đăng ký mà mở không lên
+thì Windows đổ lỗi cho app chứ không đổ cho codec thiếu.
 
 > **Đã dính bug này một lần:** phần copy native lib phải nằm trong `Cadence.App.csproj`,
 > không phải `Cadence.Audio.csproj` — `RuntimeIdentifier` không lan xuống class library,
