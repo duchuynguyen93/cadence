@@ -145,10 +145,11 @@ thì Windows đổ lỗi cho app chứ không đổ cho codec thiếu.
 - [x] **Ảnh bìa** — ưu tiên ảnh nhúng trong file, không có thì lấy `cover.jpg`/`folder.jpg`… cùng thư mục; hiện ở danh sách và thanh phát, có ô giữ chỗ khi không có ảnh
 - [x] Shuffle (Fisher–Yates, giữ nguyên bài đang phát khi bật/tắt), repeat off/all/one
 - [x] Tìm kiếm theo tên bài / nghệ sĩ / album
-- [x] Đèn giao thông tự vẽ, title bar tuỳ biến, sáng/tối theo hệ thống. Khung
-  cửa sổ đặt theo nền tảng: Windows dùng `BorderOnly` để hệ điều hành thôi vẽ
-  title bar (vẫn giữ viền, resize và snap), macOS dùng `Full` để hệ thống vẽ đèn
-  giao thông thật rồi ẩn cụm tự vẽ đi
+- [x] Title bar tuỳ biến, sáng/tối theo hệ thống. Khung cửa sổ đặt theo nền
+  tảng: Windows dùng `BorderOnly` để hệ điều hành thôi vẽ title bar (vẫn giữ
+  viền, resize và snap) rồi ta tự vẽ nút caption kiểu Windows — `─ ▢ ✕` bên
+  phải, nút đóng đỏ khi hover; macOS dùng `Full` để hệ thống vẽ đèn giao thông
+  thật rồi ẩn cụm của ta đi
 - [x] **Chế độ thu gọn** — cửa sổ co còn 420×132, nổi trên cùng, chỉ còn ảnh bìa + tên bài + prev/play/next. Bấm nút ở góc phải title bar. Hai bố cục cùng bind một ViewModel nên chuyển qua lại không làm nhạc gián đoạn.
 - [x] **Mở file bằng "Open with" / double-click** — phát ngay bài được chọn, kể
   cả khi nó chưa có trong thư viện, rồi nạp các bài cùng thư mục ở nền để

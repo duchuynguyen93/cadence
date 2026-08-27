@@ -47,9 +47,6 @@
                     <!-- Chữ/ký hiệu nằm TRÊN nền hổ phách: phải là màu nền, không phải trắng -->
                     <SolidColorBrush x:Key="OnAccent" Color="#0A0A0B" />
 
-                    <SolidColorBrush x:Key="TrafficRed" Color="#FF5F57" />
-                    <SolidColorBrush x:Key="TrafficYellow" Color="#FEBC2E" />
-                    <SolidColorBrush x:Key="TrafficGreen" Color="#28C840" />
                 </ResourceDictionary>
 
                 <ResourceDictionary x:Key="Light">
@@ -77,9 +74,6 @@
                     <SolidColorBrush x:Key="AccentMuted" Color="#C87E12" Opacity="0.18" />
                     <SolidColorBrush x:Key="OnAccent" Color="#FFFFFF" />
 
-                    <SolidColorBrush x:Key="TrafficRed" Color="#FF5F57" />
-                    <SolidColorBrush x:Key="TrafficYellow" Color="#FEBC2E" />
-                    <SolidColorBrush x:Key="TrafficGreen" Color="#28C840" />
                 </ResourceDictionary>
 
             </ResourceDictionary.ThemeDictionaries>
@@ -102,35 +96,54 @@
         </ResourceDictionary>
     </Styles.Resources>
 
-    <!-- ── Đèn giao thông ────────────────────────────────────────────────────
-         Giữ lại: chúng có trong chính mockup của Lumen, và đọc là chrome của hệ
-         điều hành chứ không phải điểm nhấn nội dung — nên không phá nguyên tắc
-         một-màu-nhấn ở trên. -->
-    <Style Selector="Button.traffic">
-        <Setter Property="Width" Value="12" />
-        <Setter Property="Height" Value="12" />
+    <!-- ── Nút điều khiển cửa sổ ─────────────────────────────────────────────
+         Kiểu Windows, không phải đèn giao thông macOS.
+
+         Đèn giao thông là di sản từ khi mục tiêu là "giao diện macOS trên
+         Windows". Mục tiêu đó đã đổi, và ba chấm màu không ký hiệu vừa lạc lõng
+         trên Windows vừa kém thông tin hơn. Đây là thứ mà mọi app chrome tối
+         trên Windows đều dùng.
+
+         Chỉ hiện trên Windows. Trên macOS hệ điều hành tự vẽ, xem ApplyWindowChrome.
+
+         Cố ý VUÔNG GÓC, khác với phần còn lại của app: nút caption nằm sát góc
+         cửa sổ, bo góc chúng sẽ để lộ một mẩu nền phía sau ở đúng chỗ đó. -->
+    <Style Selector="Button.caption">
+        <Setter Property="Width" Value="46" />
+        <Setter Property="Height" Value="38" />
         <Setter Property="Padding" Value="0" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="0" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="Template">
-            <ControlTemplate>
-                <Border Background="{TemplateBinding Background}"
-                        CornerRadius="6" Width="12" Height="12" />
-            </ControlTemplate>
-        </Setter>
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+        <!-- Segoe Fluent Icons trên Win11, MDL2 trên Win10. Ký hiệu caption nằm
+             ở cùng vị trí trong cả hai bộ nên một chuỗi dự phòng là đủ. -->
+        <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
-    <Style Selector="Button.traffic.close">
-        <Setter Property="Background" Value="{DynamicResource TrafficRed}" />
+    <Style Selector="Button.caption:pointerover">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
     </Style>
-    <Style Selector="Button.traffic.minimise">
-        <Setter Property="Background" Value="{DynamicResource TrafficYellow}" />
+    <Style Selector="Button.caption:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource HoverOverlay}" />
+        <Setter Property="CornerRadius" Value="0" />
     </Style>
-    <Style Selector="Button.traffic.zoom">
-        <Setter Property="Background" Value="{DynamicResource TrafficGreen}" />
+
+    <!-- Nút đóng: đỏ khi rê chuột. Đây là quy ước của Windows, và là dấu hiệu
+         duy nhất phân biệt nút phá huỷ với hai nút còn lại. -->
+    <Style Selector="Button.caption.close:pointerover">
+        <Setter Property="Foreground" Value="#FFFFFF" />
     </Style>
-    <Style Selector="Border.trafficCluster:not(.active) Button.traffic">
-        <Setter Property="Background" Value="{DynamicResource TextTertiary}" />
+    <Style Selector="Button.caption.close:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#E81123" />
+        <Setter Property="CornerRadius" Value="0" />
+    </Style>
+
+    <!-- Cửa sổ mất focus thì nút mờ đi, giống hành vi của Windows. -->
+    <Style Selector="Border.captionCluster:not(.active) Button.caption">
+        <Setter Property="Foreground" Value="{DynamicResource TextTertiary}" />
     </Style>
 
     <!-- ── Mục sidebar ───────────────────────────────────────────────────── -->

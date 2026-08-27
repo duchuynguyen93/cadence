@@ -43,35 +43,40 @@
         <Border Grid.Row="0" Name="TitleBar" Background="Transparent">
             <Grid ColumnDefinitions="Auto,*,Auto">
 
-                <!-- Đèn giao thông macOS -->
-                <Border Grid.Column="0" Name="TrafficCluster" Classes="trafficCluster active"
-                        Margin="20,0,0,0" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Classes="traffic close"    Name="CloseButton"    />
-                        <Button Classes="traffic minimise" Name="MinimiseButton" />
-                        <Button Classes="traffic zoom"     Name="ZoomButton"     />
-                    </StackPanel>
-                </Border>
+                <!-- Cột 0 trống: trên macOS hệ điều hành vẽ đèn giao thông ở đây,
+                     nên phải chừa chỗ. Trên Windows bề rộng này về 0. -->
+                <Border Grid.Column="0" Name="MacTrafficSpacer" Width="78" />
 
                 <TextBlock Grid.Column="1" Text="Cadence"
                            HorizontalAlignment="Center" VerticalAlignment="Center"
                            FontSize="{StaticResource FontSizeBody}" FontWeight="SemiBold"
                            Foreground="{DynamicResource TextSecondary}" />
 
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6"
-                            VerticalAlignment="Center" Margin="0,0,14,0">
-                    <TextBox Classes="search" Width="220"
+                <StackPanel Grid.Column="2" Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBox Classes="search" Width="220" Margin="0,0,6,0"
                              VerticalAlignment="Center"
                              PlaceholderText="Tìm bài hát, nghệ sĩ, album"
                              Text="{Binding SearchText}" />
 
                     <!-- Thu gọn: hai góc đối nhau chụm vào trong -->
                     <Button Classes="transport" Command="{Binding ToggleMiniModeCommand}"
-                            Padding="6" ToolTip.Tip="Thu gọn cửa sổ">
+                            Padding="6" Margin="0,0,6,0" ToolTip.Tip="Thu gọn cửa sổ">
                         <Path Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.4"
                               StrokeLineCap="Round" StrokeJoin="Round" Width="14" Height="14"
                               Data="M6,1 L6,6 L1,6 M8,13 L8,8 L13,8" />
                     </Button>
+
+                    <Border Name="CaptionCluster" Classes="captionCluster active">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Classes="caption" Name="MinimiseButton"
+                                    Content="&#xE921;" ToolTip.Tip="Thu nhỏ" />
+                            <Button Classes="caption" Name="ZoomButton"
+                                    Content="&#xE922;" ToolTip.Tip="Phóng to" />
+                            <Button Classes="caption close" Name="CloseButton"
+                                    Content="&#xE8BB;" ToolTip.Tip="Đóng" />
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </Grid>
         </Border>
@@ -292,21 +297,27 @@
 
         <Border Grid.Row="0" Name="MiniTitleBar" Background="Transparent">
             <Grid ColumnDefinitions="Auto,*,Auto">
-                <Border Grid.Column="0" Name="MiniTrafficCluster" Classes="trafficCluster active"
-                        Margin="14,0,0,0" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Classes="traffic close"    Name="MiniCloseButton"    />
-                        <Button Classes="traffic minimise" Name="MiniMinimiseButton" />
-                    </StackPanel>
-                </Border>
+                <Border Grid.Column="0" Name="MiniMacTrafficSpacer" Width="72" />
 
-                <!-- Mở rộng: hai góc đối nhau bung ra ngoài — nghịch đảo của nút thu gọn -->
-                <Button Grid.Column="2" Classes="transport" Command="{Binding ToggleMiniModeCommand}"
-                        Padding="6" Margin="0,0,10,0" ToolTip.Tip="Mở rộng cửa sổ">
-                    <Path Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.4"
-                          StrokeLineCap="Round" StrokeJoin="Round" Width="14" Height="14"
-                          Data="M1,5 L1,1 L5,1 M13,9 L13,13 L9,13" />
-                </Button>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Mở rộng: hai góc đối nhau bung ra ngoài — nghịch đảo của nút thu gọn -->
+                    <Button Classes="transport" Command="{Binding ToggleMiniModeCommand}"
+                            Padding="6" Margin="0,0,4,0" ToolTip.Tip="Mở rộng cửa sổ">
+                        <Path Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1.4"
+                              StrokeLineCap="Round" StrokeJoin="Round" Width="14" Height="14"
+                              Data="M1,5 L1,1 L5,1 M13,9 L13,13 L9,13" />
+                    </Button>
+
+                    <!-- Không có nút phóng to: chế độ thu gọn khoá kích thước. -->
+                    <Border Name="MiniCaptionCluster" Classes="captionCluster active">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Classes="caption" Name="MiniMinimiseButton"
+                                    Height="30" Content="&#xE921;" ToolTip.Tip="Thu nhỏ" />
+                            <Button Classes="caption close" Name="MiniCloseButton"
+                                    Height="30" Content="&#xE8BB;" ToolTip.Tip="Đóng" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
             </Grid>
         </Border>
 

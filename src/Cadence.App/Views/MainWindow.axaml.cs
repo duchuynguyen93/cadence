@@ -48,10 +48,17 @@ public partial class MainWindow : Window
         TrackList.DoubleTapped += OnTrackDoubleTapped;
         TrackList.KeyDown += OnTrackListKeyDown;
 
-        // Đèn giao thông xám đi khi cửa sổ mất focus — chi tiết nhỏ nhưng thiếu nó
-        // thì cảm giác "macOS" mất ngay.
-        Activated += (_, _) => SetTrafficActive(true);
-        Deactivated += (_, _) => SetTrafficActive(false);
+        // Nút caption mờ đi khi cửa sổ mất focus, giống hành vi của Windows.
+        Activated += (_, _) => SetCaptionActive(true);
+        Deactivated += (_, _) => SetCaptionActive(false);
+
+        // Ký hiệu nút giữa phải đổi theo trạng thái: phóng to và khôi phục là hai
+        // hành động khác nhau, hiện cùng một hình thì nút nói dối một nửa số lần.
+        PropertyChanged += (_, e) =>
+        {
+            if (e.Property == WindowStateProperty) UpdateMaximiseGlyph();
+        };
+        UpdateMaximiseGlyph();
 
         ApplyWindowChrome();
     }
@@ -83,8 +90,12 @@ public partial class MainWindow : Window
         {
             WindowDecorations = WindowDecorations.Full;
             ExtendClientAreaToDecorationsHint = true;
-            TrafficCluster.IsVisible = false;
-            MiniTrafficCluster.IsVisible = false;
+
+            // Hệ điều hành đã vẽ đèn giao thông thật ở góc trái. Ẩn cụm nút của
+            // ta đi và chừa đúng chỗ cho chúng, nếu không tiêu đề căn giữa sẽ
+            // lệch và nút hệ thống sẽ đè lên nội dung.
+            CaptionCluster.IsVisible = false;
+            MiniCaptionCluster.IsVisible = false;
             return;
         }
 
@@ -93,16 +104,28 @@ public partial class MainWindow : Window
         // Không còn khung hệ thống nào để kéo nội dung vào, và bật cờ này cùng
         // BorderOnly là yêu cầu hai thứ mâu thuẫn nhau.
         ExtendClientAreaToDecorationsHint = false;
+
+        // Không có đèn giao thông của hệ điều hành ở góc trái, nên không cần
+        // chừa chỗ — bỏ khoảng đệm để tiêu đề nằm đúng giữa cửa sổ.
+        MacTrafficSpacer.Width = 0;
+        MiniMacTrafficSpacer.Width = 0;
     }
 
-    private void SetTrafficActive(bool active)
+    private void SetCaptionActive(bool active)
     {
-        foreach (var cluster in new[] { TrafficCluster, MiniTrafficCluster })
+        foreach (var cluster in new[] { CaptionCluster, MiniCaptionCluster })
         {
             if (active) cluster.Classes.Add("active");
             else cluster.Classes.Remove("active");
         }
     }
+
+    /// <summary>Ký hiệu Segoe cho phóng to và khôi phục.</summary>
+    private const string MaximiseGlyph = "\uE922";
+    private const string RestoreGlyph = "\uE923";
+
+    private void UpdateMaximiseGlyph() =>
+        ZoomButton.Content = WindowState == WindowState.Maximized ? RestoreGlyph : MaximiseGlyph;
 
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
