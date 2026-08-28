@@ -75,7 +75,9 @@ public partial class MainWindow : Window
     /// dung của ta bị kéo lên nằm DƯỚI khung đó: chữ tiêu đề của Windows đè lên
     /// cụm đèn giao thông tự vẽ, và ba nút hệ thống đè lên ô tìm kiếm.
     /// <c>BorderOnly</c> bỏ title bar nhưng giữ viền — nên vẫn resize, vẫn snap,
-    /// vẫn có bóng đổ, mà toàn bộ hàng trên cùng là của ta.
+    /// vẫn có bóng đổ, mà toàn bộ hàng trên cùng là của ta. Vẫn cần
+    /// <c>ExtendClientAreaToDecorationsHint</c> kèm theo, vì cái viền còn lại đó
+    /// vẫn được Windows vẽ bằng màu hệ thống.
     /// </para>
     /// <para>
     /// Trên macOS thì ngược lại: giữ <c>Full</c> để hệ điều hành vẽ đèn giao
@@ -101,9 +103,14 @@ public partial class MainWindow : Window
 
         WindowDecorations = WindowDecorations.BorderOnly;
 
-        // Không còn khung hệ thống nào để kéo nội dung vào, và bật cờ này cùng
-        // BorderOnly là yêu cầu hai thứ mâu thuẫn nhau.
-        ExtendClientAreaToDecorationsHint = false;
+        // Vẫn phải bật, dù đã BorderOnly.
+        //
+        // BorderOnly bỏ title bar nhưng GIỮ khung resize — và Windows vẫn vẽ
+        // khung đó bằng màu hệ thống. Không kéo nội dung ra phủ lên thì client
+        // area bắt đầu bên dưới khung, để lộ một dải xám mỏng chạy ngang phía
+        // trên title bar tự vẽ, trông đúng như hai lớp giao diện chồng nhau.
+        // Cũng chính dải đó đẩy ba nút caption thụt vào khỏi mép phải.
+        ExtendClientAreaToDecorationsHint = true;
 
         // Không có đèn giao thông của hệ điều hành ở góc trái, nên không cần
         // chừa chỗ — bỏ khoảng đệm để tiêu đề nằm đúng giữa cửa sổ.

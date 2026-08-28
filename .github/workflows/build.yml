@@ -1,9 +1,17 @@
 name: build
 
+# Runner Windows tính gấp đôi phút và repo này là private, nên đẩy tài liệu mà
+# quay cả pipeline là tiêu hạn mức cho không gì cả.
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'icons/**'
   pull_request:
+    paths-ignore:
+      - '**.md'
   workflow_dispatch:
 
 permissions:
